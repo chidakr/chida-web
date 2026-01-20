@@ -14,7 +14,7 @@ import {
   Eye,
   MapPin,
   Flame,
-  Menu, // 햄버거 메뉴 아이콘 (3줄)
+  Menu,
   Sparkles,
 } from 'lucide-react';
 
@@ -39,23 +39,21 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans overflow-x-hidden">
-      {/* 1. 헤더 (GNB) 업그레이드 */}
+      {/* 1. 헤더 */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-100 h-16 transition-all">
         <div className="max-w-7xl mx-auto px-5 h-full flex items-center justify-between">
-          {/* 로고 및 네비게이션 */}
           <div className="flex items-center gap-8">
-            {/* 로고 */}
+            {/* 로고: 블루 포인트 */}
             <div
               className="text-2xl font-black tracking-tighter cursor-pointer flex items-center gap-1"
               onClick={() => router.push('/')}
             >
               <span className="text-black">치다</span>
-              <span className="w-2 h-2 rounded-full bg-red-500 mt-3 animate-pulse"></span>
+              {/* 토스 블루 컬러 적용 */}
+              <span className="w-2 h-2 rounded-full bg-[#3182F6] mt-3 animate-pulse"></span>
             </div>
 
-            {/* 네비게이션 메뉴 */}
             <nav className="hidden md:flex items-center text-sm font-bold text-slate-500">
-              {/* [핵심] 스프린트 스타일: 아이콘 + 검은색 오버레이 효과 */}
               <button
                 onClick={() => router.push('/tournaments')}
                 className="group flex items-center gap-2 px-4 py-2 rounded-lg transition-all hover:bg-slate-100 relative overflow-hidden"
@@ -64,58 +62,47 @@ export default function LandingPage() {
                 <span className="relative z-10 group-hover:text-black transition-colors">
                   대회 리스트
                 </span>
-                {/* 호버 시 나타나는 검은색 오버레이 (스프린트 느낌) */}
                 <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-5 transition-opacity rounded-lg"></div>
               </button>
-
-              {/* 나머지 메뉴 (예시 - 필요시 활성화) */}
-              {/* <button className="px-4 py-2 hover:text-black transition-colors">랭킹</button>
-              <button className="px-4 py-2 hover:text-black transition-colors">커뮤니티</button> 
-              */}
             </nav>
           </div>
-
-          {/* 로그인 버튼 */}
           <button className="text-xs font-bold bg-black text-white px-5 py-2.5 rounded-full hover:bg-slate-800 transition-all shadow-md hover:shadow-lg active:scale-95">
             로그인
           </button>
         </div>
       </header>
 
-      {/* 2. 새로운 히어로 배너 (22.png 스타일) */}
+      {/* 2. 히어로 배너 (블루 테마) */}
       <section className="relative pt-32 pb-24 bg-slate-50/30">
-        {/* 배경 그래픽 요소 (스프린트 느낌의 기하학적 패턴) */}
+        {/* 배경 그래픽: 블루 & 퍼플 계열로 변경 */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute -top-[10%] right-[5%] w-[600px] h-[600px] rounded-full bg-gradient-to-br from-red-100/40 to-blue-100/40 blur-3xl animate-pulse-slow"></div>
-            <div className="absolute bottom-[10%] -left-[10%] w-[500px] h-[500px] rounded-full bg-gradient-to-tr from-orange-100/30 to-purple-100/30 blur-3xl"></div>
+            <div className="absolute -top-[10%] right-[5%] w-[600px] h-[600px] rounded-full bg-gradient-to-br from-blue-100/40 to-indigo-100/40 blur-3xl animate-pulse-slow"></div>
+            <div className="absolute bottom-[10%] -left-[10%] w-[500px] h-[500px] rounded-full bg-gradient-to-tr from-cyan-100/30 to-blue-100/30 blur-3xl"></div>
         </div>
 
         <div className="max-w-7xl mx-auto px-5 relative">
           <div className="flex flex-col md:flex-row items-center justify-between gap-12 md:gap-20">
-            {/* 왼쪽: 텍스트 콘텐츠 (과감하고 크고 두껍게) */}
             <div className="flex-1 text-center md:text-left z-10">
-              {/* 작은 뱃지 */}
+              {/* 뱃지: 블루 포인트 */}
               <div className="inline-flex items-center gap-2 bg-white border border-slate-200 px-3 py-1.5 rounded-full mb-6 shadow-sm">
-                <Sparkles size={14} className="text-red-500 fill-red-100" />
-                <span className="text-xs font-bold text-slate-600">지금 가장 핫한 테니스 플랫폼</span>
+                <Sparkles size={14} className="text-[#3182F6] fill-blue-100" />
+                <span className="text-xs font-bold text-slate-600">지금 가장 스마트한 테니스 플랫폼</span>
               </div>
 
-              {/* 메인 타이틀 */}
+              {/* 메인 타이틀: 블루 그라데이션 */}
               <h1 className="text-5xl sm:text-6xl md:text-7xl font-black leading-[1.1] mb-8 tracking-tight text-slate-900">
                 코트 위의 <br className="hidden md:block" />
                 모든 순간을 <br className="hidden md:block" />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-orange-500 to-red-500 bg-[length:200%_auto] animate-gradient">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#3182F6] via-cyan-500 to-[#3182F6] bg-[length:200%_auto] animate-gradient">
                   치다.
                 </span>
               </h1>
 
-              {/* 서브 텍스트 */}
               <p className="text-lg md:text-xl text-slate-500 font-medium mb-10 leading-relaxed break-keep max-w-xl mx-auto md:mx-0">
                 전국 랭킹 대회부터 동네 비랭킹 대회까지, <br />
                 복잡한 검색 없이 <strong>치다</strong>에서 한 번에 찾고 참가하세요.
               </p>
 
-              {/* 버튼 그룹 */}
               <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4">
                 <button
                   onClick={() => router.push('/tournaments')}
@@ -134,23 +121,20 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* 오른쪽: 일러스트 (테니스 컨셉) */}
+            {/* 오른쪽: 일러스트 영역 (배경색 변경) */}
             <div className="flex-1 relative max-w-lg md:max-w-none w-full aspect-square md:aspect-[4/3]">
-              {/* 일러스트 플레이스홀더 (여기에 테니스 일러스트를 넣으세요!) */}
-              {/* 실제 이미지 사용 시: src="/images/tennis-hero.png" */}
-              <div className="w-full h-full rounded-[3rem] bg-gradient-to-br from-slate-100 to-slate-200 border border-slate-200 flex flex-col items-center justify-center p-10 relative overflow-hidden group shadow-2xl shadow-slate-200/50 tilt-in-fwd-tr">
-                 {/* 임시 일러스트 느낌 대체 (나중에 실제 이미지로 교체 권장) */}
-                 <div className="absolute top-10 right-10 w-32 h-32 bg-yellow-300 rounded-full blur-2xl opacity-60 animate-bounce-slow"></div>
-                 <div className="absolute bottom-10 left-10 w-40 h-40 bg-blue-300 rounded-full blur-2xl opacity-60 animate-pulse"></div>
+              <div className="w-full h-full rounded-[3rem] bg-gradient-to-br from-slate-100 to-white border border-slate-200 flex flex-col items-center justify-center p-10 relative overflow-hidden group shadow-2xl shadow-slate-200/50 tilt-in-fwd-tr">
+                 {/* 장식 요소도 블루 계열로 */}
+                 <div className="absolute top-10 right-10 w-32 h-32 bg-blue-400 rounded-full blur-2xl opacity-40 animate-bounce-slow"></div>
+                 <div className="absolute bottom-10 left-10 w-40 h-40 bg-cyan-300 rounded-full blur-2xl opacity-40 animate-pulse"></div>
                  
                  <div className="relative z-10 flex flex-col items-center">
                     <span className="text-[100px] md:text-[150px] leading-none">🎾</span>
                     <span className="text-2xl font-black text-slate-400 mt-4">CHIDA. PLAY.</span>
-                    <span className="text-sm font-bold text-slate-300">테니스 대회 플랫폼</span>
+                    <span className="text-sm font-bold text-slate-300">Smart Tennis Platform</span>
                     
-                    {/* 스프린트 스타일 카드 위 배너 예시 */}
                     <div className="absolute top-8 -left-8 bg-white border border-slate-100 px-4 py-2 rounded-full shadow-lg rotate-[-12deg] flex items-center gap-2 animate-float">
-                        <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                        <span className="w-2 h-2 rounded-full bg-[#3182F6]"></span>
                         <span className="text-xs font-bold text-slate-700">실시간 접수중!</span>
                     </div>
                  </div>
@@ -160,14 +144,14 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 3. 실시간 인기 대회 (카드 UI 개선 + 배너 추가) */}
+      {/* 3. 실시간 인기 대회 */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-5">
-          {/* 섹션 헤더 */}
           <div className="flex items-center justify-between mb-10">
             <div className="flex items-center gap-2">
-              <div className="p-2.5 bg-red-50 rounded-xl">
-                <Flame size={24} className="text-red-500 fill-red-500" />
+              {/* 아이콘 배경: 블루 */}
+              <div className="p-2.5 bg-blue-50 rounded-xl">
+                <Flame size={24} className="text-[#3182F6] fill-[#3182F6]" />
               </div>
               <div>
                 <h2 className="text-2xl md:text-3xl font-black text-slate-900">실시간 인기 대회</h2>
@@ -184,7 +168,6 @@ export default function LandingPage() {
             </button>
           </div>
 
-          {/* 카드 그리드 */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
             {loading
               ? [1, 2, 3, 4].map((i) => (
@@ -196,7 +179,6 @@ export default function LandingPage() {
                     onClick={() => router.push(`/tournaments/${t.id}`)}
                     className="group relative bg-white rounded-3xl border border-slate-200 p-3 hover:border-black transition-all cursor-pointer hover:shadow-2xl hover:-translate-y-2 h-full flex flex-col"
                   >
-                    {/* 이미지 영역 */}
                     <div className="relative aspect-[4/5] rounded-2xl overflow-hidden mb-4 bg-slate-100">
                       {t.poster_url ? (
                         <img
@@ -210,33 +192,32 @@ export default function LandingPage() {
                          </div>
                       )}
                       
-                      {/* [핵심] 카드 위 배너 (스프린트 스타일) */}
                       <div className="absolute top-3 left-3 z-10">
+                         {/* 접수 상태 뱃지: 접수중일 때 토스 블루 사용 */}
                          <span className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold shadow-md backdrop-blur-md
-                           ${t.status === '접수중' ? 'bg-blue-600/90 text-white' : 
+                           ${t.status === '접수중' ? 'bg-[#3182F6]/90 text-white' : 
                              t.status === '마감' ? 'bg-slate-800/80 text-white' : 'bg-red-600/90 text-white'}`}>
                            {t.status === '접수중' && <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>}
                            {t.status}
                          </span>
                       </div>
 
-                      {/* 조회수 (기존 유지) */}
                       <div className="absolute top-3 right-3 bg-black/50 backdrop-blur-md px-2 py-1 rounded-lg flex items-center gap-1 text-[10px] text-white font-bold">
                         <Eye size={10} /> {t.view_count?.toLocaleString() || 0}
                       </div>
                     </div>
 
-                    {/* 텍스트 영역 (더 깔끔하게) */}
                     <div className="px-2 pb-2 flex flex-col flex-1">
                       <div className="flex gap-1.5 mb-2">
                         <span className="text-[10px] text-slate-500 bg-slate-50 px-2 py-0.5 rounded font-bold border border-slate-100">
                           {t.organization}
                         </span>
-                        <span className="text-[10px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded font-bold border border-blue-100">
+                        <span className="text-[10px] text-[#3182F6] bg-blue-50 px-2 py-0.5 rounded font-bold border border-blue-100">
                           {t.division}
                         </span>
                       </div>
-                      <h3 className="font-bold text-lg leading-snug mb-3 line-clamp-2 group-hover:text-red-600 transition-colors break-keep">
+                      {/* 타이틀 호버: 블루 */}
+                      <h3 className="font-bold text-lg leading-snug mb-3 line-clamp-2 group-hover:text-[#3182F6] transition-colors break-keep">
                         {t.title}
                       </h3>
                       <div className="mt-auto flex items-center gap-3 text-xs text-slate-500 font-medium border-t border-slate-50 pt-3">
@@ -252,7 +233,6 @@ export default function LandingPage() {
                   </div>
                 ))}
           </div>
-           {/* 모바일용 더보기 버튼 */}
            <button 
               onClick={() => router.push('/tournaments')}
               className="md:hidden w-full mt-8 flex items-center justify-center gap-1 text-sm font-bold text-slate-500 bg-slate-50 border border-slate-100 py-4 rounded-2xl hover:bg-slate-100 transition-colors"
@@ -262,16 +242,17 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 4. 하단 카테고리 섹션 (기존 유지하되 약간 다듬음) */}
+      {/* 4. 카테고리 섹션 */}
       <section className="py-20 bg-slate-50">
         <div className="max-w-7xl mx-auto px-5">
           <div className="text-center mb-12">
-             <h2 className="text-3xl font-black mb-3">원하는 대회를 <span className="text-red-500">빠르게</span></h2>
+             {/* 강조 텍스트: 블루 */}
+             <h2 className="text-3xl font-black mb-3">원하는 대회를 <span className="text-[#3182F6]">빠르게</span></h2>
              <p className="text-slate-500 font-medium">참가 목적에 맞는 대회를 카테고리별로 모아보세요.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
             <CategoryCard
-              icon={<Star size={28} className="text-blue-600 fill-blue-600" />}
+              icon={<Star size={28} className="text-[#3182F6] fill-[#3182F6]" />}
               title="랭킹 포인트 대회"
               desc="KATO, KATA 등 공식 랭킹 포인트를 획득할 수 있는 권위 있는 대회"
               color="bg-blue-100/50 border-blue-200"
@@ -298,14 +279,12 @@ export default function LandingPage() {
   );
 }
 
-// 카테고리 카드 컴포넌트 (디자인 개선)
 function CategoryCard({ icon, title, desc, color, onClick }: any) {
   return (
     <div
       onClick={onClick}
       className={`p-8 rounded-[2rem] bg-white border-2 border-transparent hover:${color} cursor-pointer transition-all hover:shadow-2xl hover:-translate-y-2 group relative overflow-hidden h-full`}
     >
-      {/* 배경 호버 효과 */}
       <div className={`absolute inset-0 opacity-0 group-hover:opacity-30 transition-opacity ${color.replace('border-', 'bg-').replace('/50', '')} z-0`}></div>
       
       <div className="relative z-10 h-full flex flex-col">
