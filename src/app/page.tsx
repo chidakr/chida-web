@@ -4,7 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import {
-  ChevronRight, TrendingUp, Sparkles, CheckCircle2, ShieldCheck, ArrowRight
+  ChevronRight, TrendingUp, Sparkles, CheckCircle2, ShieldCheck, ArrowRight,
+  Facebook, Youtube, Instagram
 } from 'lucide-react';
 
 export default function LandingPage() {
@@ -28,7 +29,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 font-sans overflow-x-hidden">
+    <div className="min-h-screen bg-white text-slate-900 font-sans overflow-x-hidden flex flex-col">
       
       {/* 1. Hero Section */}
       <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-40 overflow-hidden bg-gradient-to-b from-blue-50/50 to-white">
@@ -156,15 +157,11 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 5. Bottom CTA: Real Black & 3D Trophy */}
-      <section className="w-full bg-black py-32 px-5 relative overflow-hidden">
-        
-        {/* 은은한 배경 효과 (Spotlight) */}
+      {/* 5. Bottom CTA */}
+      <section className="w-full bg-black py-32 px-5 relative overflow-hidden mb-24">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[#3182F6] opacity-10 blur-[150px] rounded-full pointer-events-none"></div>
 
         <div className="max-w-5xl mx-auto relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
-            
-            {/* 텍스트 영역 */}
             <div className="text-center md:text-left flex-1">
                 <h2 className="text-4xl md:text-5xl font-semibold text-white mb-6 leading-tight">
                     이제, 코트 위에서<br/>
@@ -181,60 +178,95 @@ export default function LandingPage() {
                     대회 전체 리스트 보기
                 </button>
             </div>
-
-            {/* 3D 오브젝트 영역 (Trophy Illustration) */}
             <div className="relative w-[300px] h-[300px] md:w-[400px] md:h-[400px] flex items-center justify-center animate-float-slow">
-                 {/* CSS 3D Trophy */}
                  <CssTrophy size={280} />
-                 
-                 {/* 장식용 별 (Floating Stars) */}
                  <div className="absolute top-0 right-10 animate-pulse-slow"><CssStar size={40} /></div>
                  <div className="absolute bottom-10 left-0 animate-pulse-slow delay-700"><CssStar size={30} /></div>
             </div>
         </div>
       </section>
 
+      {/* 6. Footer (Final Complete: Larger Font & Tight Line) */}
+      <footer className="bg-white pb-20 mt-auto">
+        <div className="max-w-7xl mx-auto px-5">
+            
+            {/* 구분선: pt-5로 줄여서 라인을 텍스트 머리 위로 바짝 붙임 */}
+            <div className="border-t border-slate-200 pt-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+                
+                {/* 왼쪽: 회사 정보 */}
+                <div className="text-left space-y-2">
+                    {/* Copyright: text-base (16px)로 키움 */}
+                    <p className="text-[#65676A] font-medium text-base">© 2026 Chida Corp.</p>
+                    
+                    {/* 상세 정보: text-base (16px)로 키움 */}
+                    <div className="flex flex-col gap-1 text-base text-[#A7A7AA] font-normal">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <span>주식회사 치다</span>
+                            <span className="w-px h-3 bg-slate-300 hidden sm:block"></span>
+                            <span>대표자 : 박영승</span>
+                        </div>
+                        <p>사업자등록번호 : 000-00-00000</p>
+                    </div>
+                </div>
+
+                {/* 오른쪽: 소셜 아이콘 */}
+                <div className="flex gap-3">
+                    <SocialIcon href="https://facebook.com" icon={<Facebook size={20} />} />
+                    <SocialIcon href="https://youtube.com" icon={<Youtube size={20} />} />
+                    <SocialIcon href="https://instagram.com" icon={<Instagram size={20} />} />
+                </div>
+
+            </div>
+        </div>
+      </footer>
+
     </div>
   );
 }
 
-// 🏆 [NEW] CSS 3D Trophy Component
+// ✨ Footer용 소셜 아이콘 컴포넌트
+function SocialIcon({ href, icon }: { href: string, icon: React.ReactNode }) {
+    return (
+        <a 
+            href={href} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-[#A7A7AA] hover:bg-slate-200 hover:text-slate-600 transition-colors"
+        >
+            {icon}
+        </a>
+    )
+}
+
+// 🏆 3D Trophy Component (유지)
 function CssTrophy({ size }: { size: number }) {
     return (
         <div style={{ width: size, height: size }} className="relative flex items-center justify-center">
-             {/* 1. 컵 본체 (Body) */}
              <div className="relative z-20 w-[60%] h-[55%] bg-gradient-to-br from-yellow-200 via-yellow-400 to-yellow-600 rounded-b-[40%] rounded-t-[5%] shadow-[inset_-10px_-10px_30px_rgba(0,0,0,0.2),inset_10px_10px_30px_rgba(255,255,255,0.6)] flex items-center justify-center overflow-hidden">
-                {/* 광택 효과 */}
                 <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-white opacity-20 rotate-45 pointer-events-none blur-xl"></div>
                 <div className="absolute top-[10%] right-[10%] w-[30%] h-[30%] bg-white rounded-full opacity-40 blur-lg"></div>
              </div>
-
-             {/* 2. 손잡이 (Handles) */}
              <div className="absolute top-[15%] left-[10%] w-[80%] h-[35%] z-10">
                 <div className="absolute left-0 top-0 w-[20%] h-full border-[12px] border-yellow-500 rounded-l-[2rem] shadow-lg"></div>
                 <div className="absolute right-0 top-0 w-[20%] h-full border-[12px] border-yellow-500 rounded-r-[2rem] shadow-lg"></div>
              </div>
-
-             {/* 3. 받침대 (Base) */}
              <div className="absolute bottom-[10%] w-[40%] h-[15%] flex flex-col items-center justify-end z-10">
                  <div className="w-[40%] h-[60%] bg-yellow-600"></div>
                  <div className="w-full h-[40%] bg-gradient-to-r from-yellow-600 to-yellow-400 rounded-t-lg shadow-xl"></div>
              </div>
-
-             {/* 4. 후광 (Glow) */}
              <div className="absolute inset-0 bg-yellow-400 opacity-20 blur-[60px] rounded-full z-0"></div>
         </div>
     )
 }
 
-// ✨ 장식용 별 컴포넌트
+// ✨ Star Component
 function CssStar({ size }: { size: number }) {
     return (
         <div style={{ width: size, height: size }} className="bg-gradient-to-b from-yellow-100 to-yellow-300 transform rotate-45 rounded-sm shadow-[0_0_15px_rgba(255,255,0,0.6)]"></div>
     )
 }
 
-// 🎾 기존 테니스 공 (메인 히어로용)
+// 🎾 Tennis Ball (유지)
 function CssTennisBall({ size }: { size: number }) {
   return (
     <div 
@@ -275,3 +307,4 @@ function FeatureCard({ icon, title, desc, color }: any) {
         </div>
     );
 }
+
