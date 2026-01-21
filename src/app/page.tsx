@@ -4,8 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import {
-  ChevronRight, TrendingUp, Sparkles, CheckCircle2, ShieldCheck,
-  ArrowRight
+  ChevronRight, TrendingUp, Sparkles, CheckCircle2, ShieldCheck, ArrowRight
 } from 'lucide-react';
 
 export default function LandingPage() {
@@ -31,41 +30,23 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans overflow-x-hidden">
       
-      {/* 1. Hero Section: 3D 오브젝트 추가 */}
+      {/* 1. Hero Section */}
       <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-40 overflow-hidden bg-gradient-to-b from-blue-50/50 to-white">
-        
-        {/* 🔥 [핵심] CSS로 만든 토스 스타일 3D 오브젝트들 */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            
-            {/* 1. 왼쪽 위: 3D 테니스 공 */}
             <div className="absolute top-[15%] left-[5%] md:left-[10%] animate-float-slow">
                 <CssTennisBall size={120} />
             </div>
-
-            {/* 2. 오른쪽 아래: 3D 테니스 공 (작은거) */}
             <div className="absolute bottom-[20%] right-[5%] md:right-[15%] animate-float-medium delay-700">
                 <CssTennisBall size={80} />
             </div>
-
-            {/* 3. 오른쪽 위: 추상적인 3D 도형 (토스 느낌) */}
             <div className="absolute top-[10%] right-[5%] md:right-[10%] animate-float-fast delay-300">
                  <div className="w-20 h-20 rounded-[2rem] bg-gradient-to-br from-blue-200 to-blue-100 shadow-[inset_-5px_-5px_15px_rgba(0,0,0,0.05),10px_10px_20px_rgba(49,130,246,0.15)] transform rotate-12 backdrop-blur-sm border border-white/50"></div>
             </div>
-
-            {/* 4. 왼쪽 아래: 유리 질감 카드 */}
-            <div className="absolute bottom-[10%] left-[5%] md:left-[15%] animate-float-slow delay-1000 hidden md:block">
-                 <div className="w-32 h-20 rounded-2xl bg-white/60 backdrop-blur-xl border border-white/80 shadow-xl flex items-center justify-center transform -rotate-6">
-                    <span className="text-3xl">🏆</span>
-                 </div>
-            </div>
-
-            {/* 배경 빛 번짐 효과 */}
             <div className="absolute top-[-10%] left-[20%] w-[600px] h-[600px] bg-blue-100 rounded-full blur-[100px] opacity-40 animate-pulse-slow"></div>
             <div className="absolute top-[20%] right-[-10%] w-[500px] h-[500px] bg-purple-100 rounded-full blur-[100px] opacity-40"></div>
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-5 text-center">
-          {/* 소셜 프루프 */}
           <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm border border-blue-100 px-4 py-2 rounded-full mb-8 shadow-sm hover:shadow-md transition-shadow cursor-default animate-fade-in-up">
             <span className="flex h-2 w-2 relative">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#3182F6] opacity-75"></span>
@@ -74,7 +55,6 @@ export default function LandingPage() {
             <span className="text-sm font-medium text-slate-600">지금 <span className="text-[#3182F6] font-semibold">3,420명</span>이 대회를 찾고 있어요</span>
           </div>
 
-          {/* 메인 타이틀 */}
           <h1 className="text-5xl md:text-7xl font-semibold leading-[1.15] mb-8 tracking-tight text-slate-900 animate-fade-in-up delay-100 relative drop-shadow-sm">
             테니스 대회의 모든 것,<br />
             <span className="relative inline-block">
@@ -83,13 +63,11 @@ export default function LandingPage() {
             </span>에서 한 번에.
           </h1>
 
-          {/* 본문 */}
           <p className="text-lg md:text-xl text-slate-500 font-normal mb-10 max-w-2xl mx-auto leading-relaxed animate-fade-in-up delay-200">
             복잡한 카페 가입, 단톡방 검색은 이제 그만.<br className="hidden md:block"/>
             전국 모든 테니스 대회 정보를 가장 쉽고 스마트하게 확인하세요.
           </p>
 
-          {/* 버튼 */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up delay-300">
             <button
               onClick={() => router.push('/tournaments')}
@@ -104,7 +82,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-
       {/* 2. Stats & Trust */}
       <section className="py-12 border-y border-slate-50 bg-slate-50/30">
         <div className="max-w-7xl mx-auto px-5 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
@@ -114,7 +91,6 @@ export default function LandingPage() {
             <StatItem label="사용자 만족도" value="4.9/5.0" />
         </div>
       </section>
-
 
       {/* 3. Hot Tournaments */}
       <section className="py-24 max-w-7xl mx-auto px-5">
@@ -164,7 +140,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-
       {/* 4. Why CHIDA */}
       <section className="py-24 bg-slate-50">
         <div className="max-w-7xl mx-auto px-5">
@@ -181,26 +156,40 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* 5. Bottom CTA: Real Black & 3D Trophy */}
+      <section className="w-full bg-black py-32 px-5 relative overflow-hidden">
+        
+        {/* 은은한 배경 효과 (Spotlight) */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[#3182F6] opacity-10 blur-[150px] rounded-full pointer-events-none"></div>
 
-      {/* 5. Bottom CTA */}
-      <section className="py-24 px-5">
-        <div className="max-w-5xl mx-auto bg-[#1a1f2c] rounded-[3rem] p-10 md:p-20 text-center relative overflow-hidden group">
-            <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
+        <div className="max-w-5xl mx-auto relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
             
-            {/* CTA 배경에도 테니스공 하나 띄우기 */}
-            <div className="absolute -right-10 -bottom-10 opacity-20 group-hover:scale-110 transition-transform duration-700">
-                <CssTennisBall size={200} />
-            </div>
-
-            <div className="relative z-10">
-                <h2 className="text-3xl md:text-5xl font-semibold text-white mb-6">이제, 코트 위에서 증명할 시간.</h2>
-                <p className="text-slate-400 text-lg mb-10 font-light">지금 바로 접수 가능한 대회를 확인하고 우승에 도전하세요.</p>
+            {/* 텍스트 영역 */}
+            <div className="text-center md:text-left flex-1">
+                <h2 className="text-4xl md:text-5xl font-semibold text-white mb-6 leading-tight">
+                    이제, 코트 위에서<br/>
+                    <span className="text-[#3182F6]">증명할 시간</span>입니다.
+                </h2>
+                <p className="text-slate-400 text-lg mb-10 font-light max-w-lg mx-auto md:mx-0">
+                    망설이지 마세요. 당신을 기다리는 수많은 대회가 여기 있습니다.
+                    지금 바로 도전하세요.
+                </p>
                 <button 
                     onClick={() => router.push('/tournaments')}
-                    className="px-10 py-5 bg-[#3182F6] text-white rounded-2xl font-semibold text-lg hover:bg-blue-600 transition-all shadow-lg shadow-blue-900/50 hover:-translate-y-1"
+                    className="px-10 py-5 bg-[#3182F6] text-white rounded-2xl font-semibold text-lg hover:bg-blue-600 transition-all shadow-[0_0_40px_rgba(49,130,246,0.4)] hover:-translate-y-1 ring-2 ring-blue-500/30"
                 >
                     대회 전체 리스트 보기
                 </button>
+            </div>
+
+            {/* 3D 오브젝트 영역 (Trophy Illustration) */}
+            <div className="relative w-[300px] h-[300px] md:w-[400px] md:h-[400px] flex items-center justify-center animate-float-slow">
+                 {/* CSS 3D Trophy */}
+                 <CssTrophy size={280} />
+                 
+                 {/* 장식용 별 (Floating Stars) */}
+                 <div className="absolute top-0 right-10 animate-pulse-slow"><CssStar size={40} /></div>
+                 <div className="absolute bottom-10 left-0 animate-pulse-slow delay-700"><CssStar size={30} /></div>
             </div>
         </div>
       </section>
@@ -209,19 +198,52 @@ export default function LandingPage() {
   );
 }
 
-// 🎾 [NEW] CSS만으로 만든 3D 테니스 공 컴포넌트
+// 🏆 [NEW] CSS 3D Trophy Component
+function CssTrophy({ size }: { size: number }) {
+    return (
+        <div style={{ width: size, height: size }} className="relative flex items-center justify-center">
+             {/* 1. 컵 본체 (Body) */}
+             <div className="relative z-20 w-[60%] h-[55%] bg-gradient-to-br from-yellow-200 via-yellow-400 to-yellow-600 rounded-b-[40%] rounded-t-[5%] shadow-[inset_-10px_-10px_30px_rgba(0,0,0,0.2),inset_10px_10px_30px_rgba(255,255,255,0.6)] flex items-center justify-center overflow-hidden">
+                {/* 광택 효과 */}
+                <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-white opacity-20 rotate-45 pointer-events-none blur-xl"></div>
+                <div className="absolute top-[10%] right-[10%] w-[30%] h-[30%] bg-white rounded-full opacity-40 blur-lg"></div>
+             </div>
+
+             {/* 2. 손잡이 (Handles) */}
+             <div className="absolute top-[15%] left-[10%] w-[80%] h-[35%] z-10">
+                <div className="absolute left-0 top-0 w-[20%] h-full border-[12px] border-yellow-500 rounded-l-[2rem] shadow-lg"></div>
+                <div className="absolute right-0 top-0 w-[20%] h-full border-[12px] border-yellow-500 rounded-r-[2rem] shadow-lg"></div>
+             </div>
+
+             {/* 3. 받침대 (Base) */}
+             <div className="absolute bottom-[10%] w-[40%] h-[15%] flex flex-col items-center justify-end z-10">
+                 <div className="w-[40%] h-[60%] bg-yellow-600"></div>
+                 <div className="w-full h-[40%] bg-gradient-to-r from-yellow-600 to-yellow-400 rounded-t-lg shadow-xl"></div>
+             </div>
+
+             {/* 4. 후광 (Glow) */}
+             <div className="absolute inset-0 bg-yellow-400 opacity-20 blur-[60px] rounded-full z-0"></div>
+        </div>
+    )
+}
+
+// ✨ 장식용 별 컴포넌트
+function CssStar({ size }: { size: number }) {
+    return (
+        <div style={{ width: size, height: size }} className="bg-gradient-to-b from-yellow-100 to-yellow-300 transform rotate-45 rounded-sm shadow-[0_0_15px_rgba(255,255,0,0.6)]"></div>
+    )
+}
+
+// 🎾 기존 테니스 공 (메인 히어로용)
 function CssTennisBall({ size }: { size: number }) {
   return (
     <div 
       style={{ width: size, height: size }}
       className="rounded-full bg-[#E8F664] relative shadow-[inset_-10px_-10px_30px_rgba(0,0,0,0.15),inset_10px_10px_30px_rgba(255,255,255,0.8),0_20px_40px_rgba(0,0,0,0.1)] flex items-center justify-center overflow-hidden"
     >
-      {/* 테니스 공의 흰색 곡선 패턴 */}
       <div className="absolute w-full h-full border-[6px] border-white rounded-full opacity-80" style={{ transform: 'scale(1.5) rotate(45deg)', borderRadius: '50%' }}></div>
       <div className="absolute w-[90%] h-[90%] border-[6px] border-white rounded-full opacity-80" style={{ top: '-45%', left: '-45%' }}></div>
       <div className="absolute w-[90%] h-[90%] border-[6px] border-white rounded-full opacity-80" style={{ bottom: '-45%', right: '-45%' }}></div>
-      
-      {/* 하이라이트 (광택) */}
       <div className="absolute top-[15%] left-[15%] w-[20%] h-[20%] bg-white rounded-full blur-md opacity-60"></div>
     </div>
   );
@@ -253,4 +275,3 @@ function FeatureCard({ icon, title, desc, color }: any) {
         </div>
     );
 }
-
