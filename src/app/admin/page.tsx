@@ -1,24 +1,35 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import { useRouter } from 'next/navigation';
-import { Trash2, Plus, ArrowLeft, MapPin, Calendar, Layers } from 'lucide-react';
+import { createClient } from '@/src/utils/supabase/client';
+import { Trash2, Plus, RefreshCw, MapPin, Calendar } from 'lucide-react';
 
-export default function AdminDashboard() {
-  const router = useRouter();
+export default function AdminPage() {
+  const supabase = createClient();
   const [tournaments, setTournaments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 데이터 가져오기 (최신 등록순)
+  // 입력 폼 상태 (DB 컬럼과 일치시킴)
+  const [formData, setFormData] = useState({
+    title: '',
+    organizer: '',
+    date: '',
+    location: '',
+    level: '',
+    status: '접수중',
+    fee: '',
+    image_url: '' // poster_url -> image_url로 변경
+  });
+
+  // 1. 대회 목록 불러오기
   const fetchTournaments = async () => {
+    setLoading(true);
     const { data, error } = await supabase
       .from('tournaments')
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (error) console.error(error);
-    else setTournaments(data || []);
+    if (!error) setTournaments(data || []);
     setLoading(false);
   };
 
@@ -26,157 +37,125 @@ export default function AdminDashboard() {
     fetchTournaments();
   }, []);
 
-  // 대회 삭제 기능
-  const handleDelete = async (id: string) => {
-    if (!confirm('정말 삭제하시겠습니까? (복구 불가)')) return;
+  // 2. 대회 추가하기
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.title || !formData.date) return alert('대회명과 날짜는 필수입니다!');
 
-    try {
-      const { error } = await supabase
-        .from('tournaments')
-        .delete()
-        .eq('id', id);
+    const { error } = await supabase
+      .from('tournaments')
+      .insert([formData]);
 
-      if (error) throw error;
-
-      alert('삭제되었습니다.');
+    if (error) {
+      alert('추가 실패: ' + error.message);
+    } else {
+      alert('대회가 추가되었습니다! 🎾');
+      setFormData({ // 폼 초기화
+        title: '', organizer: '', date: '', location: '', level: '', status: '접수중', fee: '', image_url: ''
+      });
       fetchTournaments(); // 목록 새로고침
-    } catch (err: any) {
-      alert('삭제 실패: ' + err.message);
     }
   };
 
+  // 3. 대회 삭제하기 (여기가 안 되던 부분!)
+  const handleDelete = async (id: string) => {
+    if (!confirm('정말 삭제하시겠습니까?')) return;
+
+    const { error } = await supabase
+      .from('tournaments')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      alert('삭제 실패 (참가자가 있는 대회일 수 있습니다): ' + error.message);
+    } else {
+      alert('삭제되었습니다.');
+      fetchTournaments();
+    }
+  };
+
+  // 입력값 변경 핸들러
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 p-5 md:p-10 font-sans">
-      <div className="max-w-6xl mx-auto">
-        
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-black mb-2 flex items-center gap-2">
-              🎛️ 관리자 대시보드
-            </h1>
-            <p className="text-slate-500 text-sm">현재 등록된 대회 목록을 관리합니다.</p>
-          </div>
-          <div className="flex gap-3">
-             <button 
-               onClick={() => router.push('/')} 
-               className="px-4 py-2.5 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors flex items-center gap-2 text-sm font-bold shadow-sm"
-             >
-                <ArrowLeft size={16}/> 메인으로
-             </button>
-             <button 
-               onClick={() => router.push('/admin/write')} // <--- [핵심] 아까 만든 등록 페이지로 이동
-               className="px-5 py-2.5 bg-black text-white rounded-xl hover:bg-slate-800 transition-all flex items-center gap-2 text-sm font-bold shadow-lg hover:-translate-y-0.5"
-             >
-                <Plus size={18}/> 새 대회 등록
-             </button>
-          </div>
+    <div className="min-h-screen bg-slate-50 p-10 font-sans text-slate-900">
+      <div className="max-w-5xl mx-auto">
+        <h1 className="text-3xl font-bold mb-8 flex items-center gap-2">
+          🛠️ 관리자 페이지 (대회 관리)
+        </h1>
+
+        {/* 1. 대회 등록 폼 */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-10">
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <Plus size={20} className="text-[#3182F6]" /> 새 대회 등록
+          </h2>
+          <form onSubmit={handleAdd} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input name="title" placeholder="대회명 (예: 제1회 치다 오픈)" value={formData.title} onChange={handleChange} className="p-3 border rounded-xl" required />
+            <input name="organizer" placeholder="주최 (예: 윌슨)" value={formData.organizer} onChange={handleChange} className="p-3 border rounded-xl" />
+            <input name="date" placeholder="날짜 (예: 2026.03.01)" value={formData.date} onChange={handleChange} className="p-3 border rounded-xl" required />
+            <input name="location" placeholder="장소 (예: 올림픽공원)" value={formData.location} onChange={handleChange} className="p-3 border rounded-xl" />
+            <input name="level" placeholder="레벨 (예: 개나리부 / NTRP 3.0)" value={formData.level} onChange={handleChange} className="p-3 border rounded-xl" />
+            <input name="fee" placeholder="참가비 (예: 50,000원)" value={formData.fee} onChange={handleChange} className="p-3 border rounded-xl" />
+            <input name="image_url" placeholder="이미지 주소 (URL)" value={formData.image_url} onChange={handleChange} className="p-3 border rounded-xl md:col-span-2" />
+            
+            <select name="status" value={formData.status} onChange={handleChange} className="p-3 border rounded-xl bg-white">
+              <option value="접수중">접수중</option>
+              <option value="마감임박">마감임박</option>
+              <option value="마감">마감</option>
+              <option value="접수예정">접수예정</option>
+            </select>
+
+            <button type="submit" className="md:col-span-2 bg-[#3182F6] text-white py-4 rounded-xl font-bold hover:bg-blue-600 transition-colors">
+              대회 등록하기
+            </button>
+          </form>
         </div>
 
-        {/* List Table */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 border-b border-slate-200 text-xs uppercase text-slate-500 font-bold">
-                <tr>
-                  <th className="p-4 w-20 text-center">포스터</th>
-                  <th className="p-4">대회명 / 단체</th>
-                  <th className="p-4">날짜 / 장소</th>
-                  <th className="p-4">부서 / 코트</th>
-                  <th className="p-4">상태</th>
-                  <th className="p-4 text-right">관리</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {loading && (
-                  <tr>
-                    <td colSpan={6} className="p-10 text-center text-slate-400">
-                      데이터를 불러오는 중입니다...
-                    </td>
-                  </tr>
-                )}
-                
-                {!loading && tournaments.map((t) => (
-                  <tr key={t.id} className="hover:bg-slate-50 transition-colors group">
-                    {/* 1. 포스터 썸네일 */}
-                    <td className="p-4 text-center">
-                      <div className="w-12 h-12 rounded-lg bg-slate-100 overflow-hidden border border-slate-200 mx-auto relative">
-                        {t.poster_url ? (
-                          <img src={t.poster_url} alt="썸네일" className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-xs text-slate-300">No Img</div>
-                        )}
-                      </div>
-                    </td>
-
-                    {/* 2. 대회명 & 단체 */}
-                    <td className="p-4">
-                      <div className="font-bold text-slate-900 text-base mb-1">{t.title}</div>
-                      <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">
-                        {t.organization}
-                      </span>
-                    </td>
-
-                    {/* 3. 날짜 & 장소 */}
-                    <td className="p-4">
-                      <div className="flex items-center gap-1.5 text-slate-600 mb-1">
-                        <Calendar size={14} className="text-slate-400"/>
-                        {t.start_date}
-                      </div>
-                      <div className="flex items-center gap-1.5 text-slate-500">
-                        <MapPin size={14} className="text-slate-400"/>
-                        {t.location}
-                      </div>
-                    </td>
-
-                    {/* 4. 부서 & 코트 */}
-                    <td className="p-4">
-                       <div className="flex gap-1 flex-wrap">
-                         <span className="px-2 py-1 bg-slate-100 rounded text-xs font-medium text-slate-600 border border-slate-200">
-                           {t.division}
-                         </span>
-                         <span className="px-2 py-1 bg-slate-100 rounded text-xs font-medium text-slate-600 border border-slate-200">
-                           {t.court_type === 'Hard' ? '하드' : t.court_type === 'Clay' ? '클레이' : '인조잔디'}
-                         </span>
-                       </div>
-                    </td>
-
-                    {/* 5. 상태 */}
-                    <td className="p-4">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold border 
-                        ${t.status === '접수중' 
-                          ? 'bg-blue-50 text-blue-600 border-blue-100' 
-                          : t.status === '마감' 
-                            ? 'bg-slate-100 text-slate-400 border-slate-200' 
-                            : 'bg-red-50 text-red-600 border-red-100'
-                        }`}>
-                        {t.status}
-                      </span>
-                    </td>
-
-                    {/* 6. 삭제 버튼 */}
-                    <td className="p-4 text-right">
-                      <button 
-                        onClick={() => handleDelete(t.id)}
-                        className="p-2.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all"
-                        title="대회 삭제"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {/* 2. 대회 목록 리스트 */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-bold">등록된 대회 목록 ({tournaments.length})</h2>
+            <button onClick={fetchTournaments} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><RefreshCw size={20} /></button>
           </div>
-          
-          {!loading && tournaments.length === 0 && (
-             <div className="py-20 text-center flex flex-col items-center justify-center text-slate-400">
-               <Layers size={48} className="mb-4 text-slate-200"/>
-               <p>아직 등록된 대회가 없습니다.</p>
-               <p className="text-sm mt-2">우측 상단 '새 대회 등록' 버튼을 눌러보세요!</p>
-             </div>
-          )}
+
+          <div className="space-y-4">
+            {loading ? <div className="text-center py-10 text-slate-400">로딩 중...</div> : tournaments.map((t) => (
+              <div key={t.id} className="flex items-center justify-between p-4 border border-slate-100 rounded-xl hover:border-blue-200 transition-colors bg-white">
+                <div className="flex items-center gap-4">
+                  {/* 이미지 썸네일 */}
+                  <div className="w-16 h-16 bg-slate-100 rounded-lg overflow-hidden flex-shrink-0">
+                    {t.image_url ? <img src={t.image_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-xs">No Img</div>}
+                  </div>
+                  
+                  {/* 텍스트 정보 */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full text-white font-bold ${
+                        t.status === '접수중' ? 'bg-blue-500' : 'bg-slate-500'
+                      }`}>{t.status}</span>
+                      <h3 className="font-bold text-slate-900">{t.title}</h3>
+                    </div>
+                    <div className="text-xs text-slate-500 flex gap-3">
+                      <span className="flex items-center gap-1"><Calendar size={12}/> {t.date}</span>
+                      <span className="flex items-center gap-1"><MapPin size={12}/> {t.location}</span>
+                      <span>| {t.level}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 삭제 버튼 */}
+                <button 
+                  onClick={() => handleDelete(t.id)}
+                  className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                  title="삭제"
+                >
+                  <Trash2 size={20} />
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

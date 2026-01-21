@@ -1,9 +1,13 @@
 'use client';
 
 import React, { useEffect, useState, useRef, Suspense } from 'react';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/src/utils/supabase/client';
 import { useRouter } from 'next/navigation';
-import { Search, MapPin, Calendar, Filter, ChevronDown, Check, RefreshCw, Square, CheckSquare, Sparkles } from 'lucide-react';
+import { 
+  Search, MapPin, Calendar, Filter, ChevronDown, Check, RefreshCw, Square, CheckSquare, 
+  Facebook, Youtube, Instagram // ✅ 소셜 아이콘 추가
+} from 'lucide-react';
+import TournamentCard from '@/src/components/layout/tournaments/TournamentCard';
 
 export default function TournamentsPage() {
   return (
@@ -13,7 +17,6 @@ export default function TournamentsPage() {
   );
 }
 
-// 📌 데이터 (기존 유지)
 const CATEGORIES = [
   { id: 'all', label: '전체 보기', sub: [] },
   { id: 'men', label: '남자 복식', color: 'bg-blue-500', sub: ['오픈부', '전국신인부', '지역신인부', '초급자(1년미만)', '초급자(2년미만)', '초급자(3년미만)'] },
@@ -29,21 +32,19 @@ const LOCATIONS = [
 
 function TournamentListContent() {
   const router = useRouter();
+  const supabase = createClient();
   const [tournaments, setTournaments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // 필터 상태
   const [filterMain, setFilterMain] = useState('카테고리 선택');
   const [filterSub, setFilterSub] = useState('');
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   
-  // 드롭다운 UI 상태
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isLocationOpen, setIsLocationOpen] = useState(false);
   const [hoveredCategory, setHoveredCategory] = useState(CATEGORIES[1]);
 
-  // Click Outside 감지를 위한 Ref
   const categoryRef = useRef<HTMLDivElement>(null);
   const locationRef = useRef<HTMLDivElement>(null);
 
@@ -60,22 +61,26 @@ function TournamentListContent() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // 데이터 불러오기
   useEffect(() => {
     async function fetchTournaments() {
       setLoading(true);
-      let query = supabase.from('tournaments').select('*').order('start_date', { ascending: true });
+      let query = supabase.from('tournaments').select('*').order('created_at', { ascending: false });
 
       if (filterSub) {
-         query = query.eq('division', filterSub);
+         query = query.ilike('level', `%${filterSub}%`);
       } else if (filterMain !== '카테고리 선택' && filterMain !== '전체 보기') {
-         query = query.ilike('division', `%${filterMain.replace(' 복식', '').replace('단식', '')}%`); 
+         const keyword = filterMain.replace(' 복식', '').replace('단식', '');
+         query = query.ilike('level', `%${keyword}%`); 
       }
+
       if (selectedLocations.length > 0) {
         const orQuery = selectedLocations.map(loc => `location.ilike.%${loc}%`).join(',');
         query = query.or(orQuery);
       }
-      if (searchTerm) query = query.ilike('title', `%${searchTerm}%`);
+
+      if (searchTerm) {
+        query = query.or(`title.ilike.%${searchTerm}%,location.ilike.%${searchTerm}%,organizer.ilike.%${searchTerm}%`);
+      }
 
       const { data, error } = await query;
       if (!error) setTournaments(data || []);
@@ -84,7 +89,6 @@ function TournamentListContent() {
     fetchTournaments();
   }, [filterMain, filterSub, selectedLocations, searchTerm]);
 
-  // 핸들러
   const resetFilters = () => { setFilterMain('카테고리 선택'); setFilterSub(''); setSelectedLocations([]); setSearchTerm(''); };
   const toggleLocation = (loc: string) => {
     if (selectedLocations.includes(loc)) setSelectedLocations(selectedLocations.filter(l => l !== loc));
@@ -96,40 +100,27 @@ function TournamentListContent() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/50 font-sans text-slate-900">
+    <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-900 flex flex-col">
       
-      {/* 1. Page Title & 3D Background */}
-      <div className="relative pt-32 pb-12 bg-white overflow-hidden">
-         {/* 3D Objects */}
-         <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-[-20%] right-[-5%] opacity-40 animate-float-slow">
-               <CssTennisBall size={180} />
-            </div>
-            <div className="absolute top-[40%] left-[5%] opacity-30 animate-float-medium delay-700">
-               <CssTennisBall size={60} />
-            </div>
-            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-blue-50/50 to-white/0"></div>
-         </div>
-
+      <div className="relative pt-32 pb-12 bg-white overflow-hidden border-b border-slate-100">
          <div className="relative z-10 max-w-7xl mx-auto px-5">
-            <h1 className="text-3xl md:text-4xl font-semibold mb-2 text-slate-900">
+            <h1 className="text-3xl md:text-4xl font-black mb-3 text-slate-900 tracking-tight">
                어떤 대회를 <span className="text-[#3182F6]">찾으시나요?</span>
             </h1>
-            <p className="text-slate-500 font-normal">
+            <p className="text-slate-500 font-medium text-lg">
                원하는 조건으로 검색하고 바로 신청해보세요.
             </p>
          </div>
+         <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-blue-50/50 to-transparent pointer-events-none"></div>
       </div>
 
-      {/* 2. Sticky Filter Bar (Glassmorphism) */}
-      <div className="sticky top-16 left-0 right-0 z-40 bg-white/80 backdrop-blur-xl border-y border-slate-100 shadow-sm transition-all">
+      <div className="sticky top-16 left-0 right-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-100 shadow-sm transition-all">
         <div className="max-w-7xl mx-auto px-5 py-4 space-y-4">
           
-          {/* 검색창 */}
           <div className="relative w-full max-w-md mx-auto md:mx-0">
              <input 
                type="text" 
-               placeholder="대회명, 지역, 클럽명 검색" 
+               placeholder="대회명, 지역, 주최 검색" 
                value={searchTerm}
                onChange={(e) => setSearchTerm(e.target.value)}
                className="w-full bg-slate-50 px-5 py-3.5 rounded-2xl text-sm outline-none focus:bg-white focus:ring-2 focus:ring-[#3182F6] transition-all pl-11 border border-slate-200 focus:border-transparent placeholder:text-slate-400 shadow-inner"
@@ -137,7 +128,6 @@ function TournamentListContent() {
              <Search size={18} className="absolute left-4 top-3.5 text-slate-400"/>
           </div>
 
-          {/* 필터 영역 */}
           <div className="flex flex-col md:flex-row items-start gap-3">
             
             {/* [필터 1] 카테고리 */}
@@ -234,7 +224,6 @@ function TournamentListContent() {
               )}
             </div>
 
-            {/* 초기화 버튼 */}
             <button onClick={resetFilters} className="p-2.5 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-400 transition-colors shadow-sm" title="필터 초기화">
               <RefreshCw size={18}/>
             </button>
@@ -242,9 +231,7 @@ function TournamentListContent() {
         </div>
       </div>
 
-      {/* 3. Tournament List Content */}
-      <main className="max-w-7xl mx-auto px-5 py-12"> 
-        
+      <main className="max-w-7xl mx-auto px-5 py-12 flex-1 w-full"> 
         <div className="flex items-center justify-between mb-8">
            <h2 className="text-lg font-semibold flex items-center gap-2 text-slate-700">
              <Filter size={18} className="text-slate-400"/>
@@ -254,77 +241,75 @@ function TournamentListContent() {
            </h2>
         </div>
         
-        {/* 카드 그리드 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-          {!loading && tournaments.map((t) => (
-            <div 
-              key={t.id}
-              onClick={() => router.push(`/tournaments/${t.id}`)} 
-              className="bg-white rounded-[1.5rem] p-3 border border-slate-100 hover:border-blue-100 cursor-pointer transition-all hover:shadow-xl hover:shadow-blue-900/5 hover:-translate-y-1 flex flex-col h-full group"
-            >
-              {/* 이미지 영역 */}
-              <div className="relative w-full aspect-[4/3] bg-slate-100 rounded-2xl overflow-hidden mb-4">
-                {t.poster_url ? (
-                  <img src={t.poster_url} alt={t.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-slate-50 text-slate-300"><span className="text-4xl">🎾</span></div>
-                )}
-                <div className="absolute top-3 left-3">
-                  <span className={`px-2.5 py-1.5 rounded-lg text-[10px] font-semibold shadow-sm backdrop-blur-md text-white
-                    ${t.status === '접수중' ? 'bg-[#3182F6]/90' : t.status === '마감' ? 'bg-slate-800/80' : 'bg-red-500/90'}`}>
-                    {t.status}
-                  </span>
+        {loading ? (
+          <div className="text-center py-20 text-slate-400">대회 정보를 불러오는 중... 🎾</div>
+        ) : (
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+             {tournaments.length > 0 ? (
+               tournaments.map((t) => (
+                 <TournamentCard key={t.id} data={t} />
+               ))
+             ) : (
+                <div className="col-span-full py-20 text-center">
+                  <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                     <Search size={40} className="text-slate-300"/>
+                  </div>
+                  <p className="text-slate-900 font-semibold text-lg mb-2">원하시는 대회를 찾지 못했어요.</p>
+                  <p className="text-slate-500 text-sm mb-8 font-normal">필터를 변경하거나 다른 검색어로 찾아보세요.</p>
+                  <button onClick={resetFilters} className="px-8 py-3.5 bg-[#3182F6] text-white rounded-2xl text-sm font-semibold hover:bg-blue-600 transition-colors shadow-lg shadow-blue-500/30">
+                    필터 초기화
+                  </button>
                 </div>
-              </div>
-
-              {/* 텍스트 영역 */}
-              <div className="px-2 pb-2 flex flex-col flex-1">
-                <div className="flex gap-1.5 mb-3">
-                   <span className="text-[10px] text-slate-500 bg-slate-50 px-2 py-1 rounded-md font-semibold">{t.organization}</span>
-                   <span className="text-[10px] text-[#3182F6] bg-blue-50 px-2 py-1 rounded-md font-semibold">{t.division}</span>
-                </div>
-                <h3 className="font-semibold text-slate-900 text-lg leading-snug mb-3 line-clamp-2 group-hover:text-[#3182F6] transition-colors break-keep">
-                  {t.title}
-                </h3>
-                <div className="mt-auto pt-3 border-t border-slate-50 space-y-2">
-                  <div className="flex items-center text-xs text-slate-500 font-medium"><Calendar size={13} className="mr-2 text-slate-400"/> {t.start_date}</div>
-                  <div className="flex items-center text-xs text-slate-500 font-medium"><MapPin size={13} className="mr-2 text-slate-400"/> {t.location}</div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* 결과 없음 UI */}
-        {!loading && tournaments.length === 0 && (
-          <div className="py-32 text-center">
-            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
-               <Search size={40} className="text-slate-300"/>
-            </div>
-            <p className="text-slate-900 font-semibold text-lg mb-2">원하시는 대회를 찾지 못했어요.</p>
-            <p className="text-slate-500 text-sm mb-8 font-normal">필터를 변경하거나 다른 검색어로 찾아보세요.</p>
-            <button onClick={resetFilters} className="px-8 py-3.5 bg-[#3182F6] text-white rounded-2xl text-sm font-semibold hover:bg-blue-600 transition-colors shadow-lg shadow-blue-500/30">
-              필터 초기화
-            </button>
-          </div>
+             )}
+           </div>
         )}
       </main>
+
+      {/* ✅ Footer 추가 (메인 페이지 디자인 유지) */}
+      <footer className="bg-white pb-20 mt-auto border-t border-slate-200">
+        <div className="max-w-7xl mx-auto px-5">
+            
+            {/* 구분선 (border-t를 위로 이동시킴) */}
+            <div className="pt-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+                
+                {/* 왼쪽: 회사 정보 */}
+                <div className="text-left space-y-2">
+                    <p className="text-[#65676A] font-medium text-base">© 2026 Chida Corp.</p>
+                    
+                    <div className="flex flex-col gap-1 text-base text-[#A7A7AA] font-normal">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <span>주식회사 치다</span>
+                            <span className="w-px h-3 bg-slate-300 hidden sm:block"></span>
+                            <span>대표자 : 박영승</span>
+                        </div>
+                        <p>사업자등록번호 : 000-00-00000</p>
+                    </div>
+                </div>
+
+                {/* 오른쪽: 소셜 아이콘 */}
+                <div className="flex gap-3">
+                    <SocialIcon href="https://facebook.com" icon={<Facebook size={20} />} />
+                    <SocialIcon href="https://youtube.com" icon={<Youtube size={20} />} />
+                    <SocialIcon href="https://instagram.com" icon={<Instagram size={20} />} />
+                </div>
+
+            </div>
+        </div>
+      </footer>
     </div>
   );
 }
 
-// 🎾 3D Tennis Ball Component (재사용)
-function CssTennisBall({ size }: { size: number }) {
-  return (
-    <div 
-      style={{ width: size, height: size }}
-      className="rounded-full bg-[#E8F664] relative shadow-[inset_-10px_-10px_30px_rgba(0,0,0,0.15),inset_10px_10px_30px_rgba(255,255,255,0.8),0_20px_40px_rgba(0,0,0,0.1)] flex items-center justify-center overflow-hidden"
-    >
-      <div className="absolute w-full h-full border-[6px] border-white rounded-full opacity-80" style={{ transform: 'scale(1.5) rotate(45deg)', borderRadius: '50%' }}></div>
-      <div className="absolute w-[90%] h-[90%] border-[6px] border-white rounded-full opacity-80" style={{ top: '-45%', left: '-45%' }}></div>
-      <div className="absolute w-[90%] h-[90%] border-[6px] border-white rounded-full opacity-80" style={{ bottom: '-45%', right: '-45%' }}></div>
-      <div className="absolute top-[15%] left-[15%] w-[20%] h-[20%] bg-white rounded-full blur-md opacity-60"></div>
-    </div>
-  );
+// ✨ Footer용 소셜 아이콘 컴포넌트
+function SocialIcon({ href, icon }: { href: string, icon: React.ReactNode }) {
+    return (
+        <a 
+            href={href} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-[#A7A7AA] hover:bg-slate-200 hover:text-slate-600 transition-colors"
+        >
+            {icon}
+        </a>
+    )
 }
-

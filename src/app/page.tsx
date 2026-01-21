@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/src/utils/supabase/client'; // ✅ Supabase 클라이언트 경로만 수정
 import {
   ChevronRight, TrendingUp, Sparkles, CheckCircle2, ShieldCheck, ArrowRight,
   Facebook, Youtube, Instagram
@@ -10,16 +10,17 @@ import {
 
 export default function LandingPage() {
   const router = useRouter();
+  const supabase = createClient(); // ✅ 클라이언트 생성
   
   const [hotTournaments, setHotTournaments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchHotTournaments() {
+      // ✅ 뷰 카운트 대신 created_at(최신순)으로 일단 가져오기 (컬럼 매칭)
       const { data, error } = await supabase
         .from('tournaments')
         .select('*')
-        .order('view_count', { ascending: false })
         .limit(4);
 
       if (!error) setHotTournaments(data || []);
@@ -120,8 +121,9 @@ export default function LandingPage() {
                     className="group cursor-pointer flex flex-col gap-3"
                 >
                     <div className="relative aspect-[4/5] rounded-3xl bg-slate-100 overflow-hidden border border-slate-200 transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-blue-500/10 group-hover:-translate-y-2">
-                        {t.poster_url ? (
-                            <img src={t.poster_url} alt={t.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"/>
+                        {/* ✅ DB 컬럼명 매칭: t.poster_url -> t.image_url */}
+                        {t.image_url ? (
+                            <img src={t.image_url} alt={t.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"/>
                         ) : (
                             <div className="w-full h-full flex items-center justify-center text-4xl grayscale opacity-20">🎾</div>
                         )}
@@ -134,7 +136,8 @@ export default function LandingPage() {
                     </div>
                     <div>
                         <h3 className="font-semibold text-lg text-slate-900 leading-snug group-hover:text-[#3182F6] transition-colors line-clamp-1">{t.title}</h3>
-                        <p className="text-sm text-slate-500 mt-1 font-normal">{t.location} · {t.start_date}</p>
+                        {/* ✅ DB 컬럼명 매칭: t.start_date -> t.date */}
+                        <p className="text-sm text-slate-500 mt-1 font-normal">{t.location} · {t.date}</p>
                     </div>
                 </div>
             ))}
@@ -190,15 +193,13 @@ export default function LandingPage() {
       <footer className="bg-white pb-20 mt-auto">
         <div className="max-w-7xl mx-auto px-5">
             
-            {/* 구분선: pt-5로 줄여서 라인을 텍스트 머리 위로 바짝 붙임 */}
+            {/* 구분선 */}
             <div className="border-t border-slate-200 pt-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
                 
                 {/* 왼쪽: 회사 정보 */}
                 <div className="text-left space-y-2">
-                    {/* Copyright: text-base (16px)로 키움 */}
                     <p className="text-[#65676A] font-medium text-base">© 2026 Chida Corp.</p>
                     
-                    {/* 상세 정보: text-base (16px)로 키움 */}
                     <div className="flex flex-col gap-1 text-base text-[#A7A7AA] font-normal">
                         <div className="flex flex-wrap items-center gap-2">
                             <span>주식회사 치다</span>
@@ -290,7 +291,14 @@ function StatItem({ label, value }: { label: string, value: string }) {
     )
 }
 
-function FeatureCard({ icon, title, desc, color }: any) {
+type FeatureCardProps = {
+    icon: React.ReactNode;
+    title: string;
+    desc: string;
+    color: 'blue' | 'green' | 'purple';
+};
+
+function FeatureCard({ icon, title, desc, color }: FeatureCardProps) {
     const colorClasses = {
         blue: 'bg-blue-50 text-[#3182F6]',
         green: 'bg-green-50 text-green-600',
@@ -307,4 +315,3 @@ function FeatureCard({ icon, title, desc, color }: any) {
         </div>
     );
 }
-
