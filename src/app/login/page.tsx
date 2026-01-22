@@ -1,8 +1,11 @@
 'use client';
 
-import KakaoLoginBtn from '../../components/auth/KakaoLoginBtn';
+// 👇 여기를 수정해주세요! (../../ 대신 @/src/ 사용)
+import KakaoLoginBtn from '../auth/KakaoLoginBtn';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
+
+// ... (아래 코드는 그대로 두시면 됩니다)
 
 export default function LoginPage() {
   const router = useRouter();
