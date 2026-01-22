@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react'; // useRef 추가
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Menu, User, LogOut, Settings, Bookmark, ChevronDown } from 'lucide-react';
+import { Menu, User, LogOut, LayoutDashboard, CreditCard, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import { createClient } from '@/src/utils/supabase/client';
 import LoginModal from '@/src/app/auth/LoginModal';
@@ -12,41 +12,48 @@ export default function Header() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
-  // 🌟 메뉴 영역을 감지하기 위한 Ref(이름표) 생성
+  // 메뉴 영역 감지 Ref
   const menuRef = useRef<HTMLDivElement>(null);
 
   const [user, setUser] = useState<any>(null);
-  const [nickname, setNickname] = useState<string>('');
+  const [nickname, setNickname] = useState<string>(''); // 실제로는 full_name을 담음
   const supabase = createClient();
 
-  // 1. 화면 아무 데나 클릭했을 때 메뉴 닫기 로직
+  // 1. 화면 클릭 감지 (메뉴 닫기)
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      // 메뉴가 열려있고, 클릭한 곳이 메뉴 영역(menuRef)의 바깥이라면? -> 닫기!
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsMenuOpen(false);
       }
     }
-
-    // 마우스 누르는 순간 감지 시작
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
-      // 청소(Cleanup)
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
 
+  // 2. 유저 정보 불러오기 (profiles 테이블 연동)
   useEffect(() => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
+      
       if (session?.user) {
         setUser(session.user);
+        
+        // 👇 [수정됨] users 테이블 -> profiles 테이블로 변경
+        // 방금 만든 프로필 설정 페이지에서 저장한 이름을 가져옵니다.
         const { data: profile } = await supabase
-          .from('users')
-          .select('nickname')
+          .from('profiles')
+          .select('full_name') // nickname 대신 full_name 사용
           .eq('id', session.user.id)
           .single();
-        if (profile) setNickname(profile.nickname);
+          
+        if (profile?.full_name) {
+            setNickname(profile.full_name);
+        } else {
+            // 프로필이 없으면 이메일 앞부분이라도 보여줌
+            setNickname(session.user.email?.split('@')[0] || '플레이어');
+        }
       }
     };
     checkUser();
@@ -57,7 +64,8 @@ export default function Header() {
     setUser(null);
     setNickname('');
     setIsMenuOpen(false);
-    window.location.reload();
+    // 로그아웃 후 메인으로 이동하며 새로고침
+    window.location.href = '/'; 
   };
 
   return (
@@ -90,44 +98,48 @@ export default function Header() {
 
           {/* 우측 사용자 영역 */}
           {user ? (
-            // 🌟 여기가 핵심: ref={menuRef} 로 감싸서 이 안쪽/바깥쪽을 구분합니다.
             <div className="relative" ref={menuRef}>
               <button 
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="flex items-center gap-2 py-1 px-2 rounded-full hover:bg-slate-50 transition-colors"
               >
                 <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200">
+                   {/* 프로필 이미지가 있다면 여기에 img 태그 넣으면 됩니다 */}
                    <User size={16} className="text-slate-600" />
                 </div>
                 <span className="text-sm font-bold text-slate-700">
-                  {nickname || '플레이어'}
+                  {nickname}
                 </span>
                 <ChevronDown size={14} className={`text-slate-400 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {/* 드롭다운 메뉴 */}
               {isMenuOpen && (
-                <div className="absolute right-0 mt-2 w-60 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-20 animate-scale-up origin-top-right">
-                  <div className="p-4 border-b border-slate-50 bg-slate-50/50">
+                <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-20 animate-scale-up origin-top-right">
+                  <div className="p-5 border-b border-slate-50 bg-slate-50/50">
                     <p className="text-xs text-slate-400 font-medium mb-1">내 계정</p>
-                    <p className="text-sm font-bold text-slate-800">{nickname}</p>
-                    <p className="text-xs text-slate-500 truncate">{user.email}</p>
+                    <p className="text-lg font-black text-slate-800">{nickname} 님</p>
+                    <p className="text-xs text-slate-500 truncate mt-0.5">{user.email}</p>
                   </div>
 
-                  <div className="p-2">
-                    <Link href="/mypage/profile" onClick={() => setIsMenuOpen(false)}>
+                  <div className="p-2 space-y-1">
+                    
+                    {/* 👇 1. 마이페이지 (허브)로 연결 */}
+                    <Link href="/mypage" onClick={() => setIsMenuOpen(false)}>
                       <div className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer group">
-                        <Settings size={18} className="text-slate-400 group-hover:text-[#3182F6]" />
-                        <span className="text-sm font-medium text-slate-600 group-hover:text-slate-900">개인정보 설정</span>
+                        <LayoutDashboard size={18} className="text-slate-400 group-hover:text-[#3182F6]" />
+                        <span className="text-sm font-bold text-slate-600 group-hover:text-slate-900">마이페이지</span>
                       </div>
                     </Link>
 
-                    <Link href="/mypage/bookmarks" onClick={() => setIsMenuOpen(false)}>
+                    {/* 👇 2. 내 선수 카드 바로가기 (추가됨) */}
+                    <Link href="/my-card" onClick={() => setIsMenuOpen(false)}>
                       <div className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer group">
-                        <Bookmark size={18} className="text-slate-400 group-hover:text-[#3182F6]" />
-                        <span className="text-sm font-medium text-slate-600 group-hover:text-slate-900">내가 북마크한 대회</span>
+                        <CreditCard size={18} className="text-slate-400 group-hover:text-purple-500" />
+                        <span className="text-sm font-bold text-slate-600 group-hover:text-slate-900">내 선수 카드</span>
                       </div>
                     </Link>
+
                   </div>
 
                   <div className="h-px bg-slate-100 mx-2"></div>

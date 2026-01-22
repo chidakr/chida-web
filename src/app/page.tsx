@@ -72,7 +72,13 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 p-4 md:p-8 flex justify-around items-center">
             <QuickMenuIcon icon={<Trophy size={32} className="text-[#3182F6]"/>} label="대회 찾기" desc="전국 대회 일정" href="/tournaments" />
             <div className="w-px h-12 bg-slate-100 hidden md:block"></div>
-            <QuickMenuIcon icon={<Users size={32} className="text-purple-500"/>} label="파트너 매칭" desc="나와 딱 맞는 짝" href="#" isReady={false} />
+               <QuickMenuIcon 
+                  icon={<Trophy size={32} className="text-purple-500"/>} 
+                  label="프로필 카드" // 변경
+                  desc="나만의 선수등록증" // 변경
+                  href="/my-card" // 경로 변경
+                  isReady={true} 
+               />
             <div className="w-px h-12 bg-slate-100 hidden md:block"></div>
             <QuickMenuIcon icon={<MapPin size={32} className="text-green-500"/>} label="코트 예약" desc="내 주변 빈 코트" href="#" isReady={false} />
         </div>
