@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { MapPin, Calendar, Trophy } from 'lucide-react';
 
+type TournamentStatus = '접수중' | '마감임박' | '마감' | '접수예정';
+
 interface TournamentCardProps {
   data: any;
   isMainPage?: boolean; // 메인페이지용 스타일 적용 여부
@@ -16,7 +18,7 @@ export default function TournamentCard({ data: t, isMainPage = false }: Tourname
     '마감임박': 'bg-red-500 text-white shadow-red-200 animate-pulse',
     '마감': 'bg-slate-600 text-white',
     '접수예정': 'bg-amber-500 text-white shadow-amber-200'
-  }[t.status] || 'bg-slate-500 text-white';
+  }[t.status as TournamentStatus] || 'bg-slate-500 text-white';
 
   return (
     <Link href={`/tournaments/${t.id}`} className="group block h-full">
