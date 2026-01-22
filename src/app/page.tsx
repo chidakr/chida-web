@@ -1,317 +1,363 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { createClient } from '@/src/utils/supabase/client'; // ✅ Supabase 클라이언트 경로만 수정
-import {
-  ChevronRight, TrendingUp, Sparkles, CheckCircle2, ShieldCheck, ArrowRight,
-  Facebook, Youtube, Instagram
-} from 'lucide-react';
+import { createClient } from '@/src/utils/supabase/client';
+import Link from 'next/link';
+import { Search, MapPin, Trophy, Users, Star, ArrowRight, MessageCircle, ShieldCheck, Zap, TrendingUp, CheckCircle, Bell } from 'lucide-react';
+import TournamentCard from '@/src/components/layout/tournaments/TournamentCard';
+import Footer from '@/src/components/layout/Footer'; 
 
-export default function LandingPage() {
-  const router = useRouter();
-  const supabase = createClient(); // ✅ 클라이언트 생성
-  
-  const [hotTournaments, setHotTournaments] = useState<any[]>([]);
+export default function HomePage() {
+  const supabase = createClient();
+  const [popularTournaments, setPopularTournaments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [notifyStatus, setNotifyStatus] = useState({ match: false, premium: false });
+
+  const handleNotify = (type: 'match' | 'premium') => {
+    if (notifyStatus[type]) return;
+    alert('알림 신청이 완료되었습니다! 🚀\n서비스가 오픈되면 가장 먼저 문자를 보내드릴게요.');
+    setNotifyStatus({ ...notifyStatus, [type]: true });
+  };
 
   useEffect(() => {
-    async function fetchHotTournaments() {
-      // ✅ 뷰 카운트 대신 created_at(최신순)으로 일단 가져오기 (컬럼 매칭)
+    async function fetchPopular() {
+      setLoading(true);
       const { data, error } = await supabase
         .from('tournaments')
         .select('*')
-        .limit(4);
-
-      if (!error) setHotTournaments(data || []);
+        .order('created_at', { ascending: false })
+        .limit(6);
+      if (!error) setPopularTournaments(data || []);
       setLoading(false);
     }
-    fetchHotTournaments();
+    fetchPopular();
   }, []);
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 font-sans overflow-x-hidden flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col font-sans">
       
-      {/* 1. Hero Section */}
-      <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-40 overflow-hidden bg-gradient-to-b from-blue-50/50 to-white">
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            <div className="absolute top-[15%] left-[5%] md:left-[10%] animate-float-slow">
-                <CssTennisBall size={120} />
-            </div>
-            <div className="absolute bottom-[20%] right-[5%] md:right-[15%] animate-float-medium delay-700">
-                <CssTennisBall size={80} />
-            </div>
-            <div className="absolute top-[10%] right-[5%] md:right-[10%] animate-float-fast delay-300">
-                 <div className="w-20 h-20 rounded-[2rem] bg-gradient-to-br from-blue-200 to-blue-100 shadow-[inset_-5px_-5px_15px_rgba(0,0,0,0.05),10px_10px_20px_rgba(49,130,246,0.15)] transform rotate-12 backdrop-blur-sm border border-white/50"></div>
-            </div>
-            <div className="absolute top-[-10%] left-[20%] w-[600px] h-[600px] bg-blue-100 rounded-full blur-[100px] opacity-40 animate-pulse-slow"></div>
-            <div className="absolute top-[20%] right-[-10%] w-[500px] h-[500px] bg-purple-100 rounded-full blur-[100px] opacity-40"></div>
-        </div>
+      {/* 1. Hero Section (라운딩 수정) */}
+      <section className="relative w-full pt-32 pb-24 md:pt-48 md:pb-32 bg-[#F9FAFB] overflow-hidden">
+         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-100/40 rounded-full blur-[100px] translate-x-1/3 -translate-y-1/4 pointer-events-none"></div>
+         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-purple-100/40 rounded-full blur-[100px] -translate-x-1/3 translate-y-1/4 pointer-events-none"></div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-5 text-center">
-          <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm border border-blue-100 px-4 py-2 rounded-full mb-8 shadow-sm hover:shadow-md transition-shadow cursor-default animate-fade-in-up">
-            <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#3182F6] opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#3182F6]"></span>
-            </span>
-            <span className="text-sm font-medium text-slate-600">지금 <span className="text-[#3182F6] font-semibold">3,420명</span>이 대회를 찾고 있어요</span>
-          </div>
-
-          <h1 className="text-5xl md:text-7xl font-semibold leading-[1.15] mb-8 tracking-tight text-slate-900 animate-fade-in-up delay-100 relative drop-shadow-sm">
-            테니스 대회의 모든 것,<br />
-            <span className="relative inline-block">
-                <span className="relative z-10 text-[#3182F6]">치다</span>
-                <span className="absolute bottom-2 left-0 w-full h-3 bg-blue-100/50 -z-0 rounded-full"></span>
-            </span>에서 한 번에.
+        <div className="max-w-7xl mx-auto px-5 relative z-10 text-center">
+          <h1 className="text-4xl md:text-6xl font-black text-slate-900 leading-[1.1] tracking-tight mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            테니스의 모든 것,<br/>
+            오직 <span className="text-[#3182F6]">치다</span>에서만.
           </h1>
-
-          <p className="text-lg md:text-xl text-slate-500 font-normal mb-10 max-w-2xl mx-auto leading-relaxed animate-fade-in-up delay-200">
-            복잡한 카페 가입, 단톡방 검색은 이제 그만.<br className="hidden md:block"/>
-            전국 모든 테니스 대회 정보를 가장 쉽고 스마트하게 확인하세요.
+          <p className="text-lg md:text-xl text-slate-500 mb-10 font-medium animate-in fade-in slide-in-from-bottom-6 duration-700 delay-100">
+             전국 대회 정보부터 파트너 매칭까지, 테니스인을 위한 가장 확실한 선택
           </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up delay-300">
-            <button
-              onClick={() => router.push('/tournaments')}
-              className="w-full sm:w-auto px-8 py-4 bg-[#3182F6] text-white rounded-2xl font-semibold text-lg hover:bg-blue-600 transition-all shadow-xl shadow-blue-500/20 active:scale-95 flex items-center justify-center gap-2 ring-4 ring-blue-50/50"
-            >
-              대회 찾으러 가기 <ChevronRight size={20} />
-            </button>
-            <button className="w-full sm:w-auto px-8 py-4 bg-white text-slate-700 border border-slate-200 rounded-2xl font-semibold text-lg hover:bg-slate-50 transition-all active:scale-95 shadow-sm">
-              내 대회 등록하기
+          
+          {/* 검색바: rounded-full -> rounded-2xl */}
+          <div className="relative max-w-3xl mx-auto shadow-2xl shadow-blue-900/10 rounded-2xl animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
+            <input 
+              type="text" 
+              placeholder="찾으시는 대회나 지역을 입력해보세요" 
+              // rounded-full -> rounded-2xl
+              className="w-full pl-8 pr-16 py-5 md:py-6 rounded-2xl border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:ring-4 focus:ring-blue-100 focus:border-[#3182F6] transition-all outline-none text-lg font-medium"
+            />
+            {/* 버튼: rounded-full -> rounded-xl */}
+            <button className="absolute right-3 top-1/2 -translate-y-1/2 bg-[#3182F6] hover:bg-blue-600 text-white p-3 md:p-4 rounded-xl transition-colors">
+                <Search size={24} />
             </button>
           </div>
         </div>
       </section>
 
-      {/* 2. Stats & Trust */}
-      <section className="py-12 border-y border-slate-50 bg-slate-50/30">
-        <div className="max-w-7xl mx-auto px-5 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            <StatItem label="누적 대회 정보" value="1,200+" />
-            <StatItem label="월간 방문자" value="45k" />
-            <StatItem label="대회 매칭률" value="98%" />
-            <StatItem label="사용자 만족도" value="4.9/5.0" />
+      {/* 2. Quick Menu (라운딩 수정) */}
+      <section className="relative w-full -mt-12 mb-20 z-20 px-5">
+        {/* rounded-3xl -> rounded-2xl */}
+        <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 p-4 md:p-8 flex justify-around items-center">
+            <QuickMenuIcon icon={<Trophy size={32} className="text-[#3182F6]"/>} label="대회 찾기" desc="전국 대회 일정" href="/tournaments" />
+            <div className="w-px h-12 bg-slate-100 hidden md:block"></div>
+            <QuickMenuIcon icon={<Users size={32} className="text-purple-500"/>} label="파트너 매칭" desc="나와 딱 맞는 짝" href="#" isReady={false} />
+            <div className="w-px h-12 bg-slate-100 hidden md:block"></div>
+            <QuickMenuIcon icon={<MapPin size={32} className="text-green-500"/>} label="코트 예약" desc="내 주변 빈 코트" href="#" isReady={false} />
         </div>
       </section>
 
-      {/* 3. Hot Tournaments */}
-      <section className="py-24 max-w-7xl mx-auto px-5">
-        <div className="flex items-center justify-between mb-12">
-            <div>
-                <h2 className="text-3xl md:text-4xl font-semibold text-slate-900 mb-3 flex items-center gap-3">
-                    <TrendingUp className="text-[#3182F6]" size={36}/> 실시간 인기 대회
-                </h2>
-                <p className="text-slate-500 font-normal">조회수가 급상승하고 있는 대회를 놓치지 마세요.</p>
-            </div>
-            <button 
-                onClick={() => router.push('/tournaments')}
-                className="hidden md:flex items-center gap-1 text-sm font-semibold text-slate-400 hover:text-[#3182F6] transition-colors"
-            >
-                전체보기 <ArrowRight size={16}/>
-            </button>
+      {/* 3. Popular Tournaments */}
+      <section className="w-full max-w-7xl mx-auto px-5 mb-32">
+        <div className="flex items-end justify-between mb-8">
+          <div>
+             <span className="text-[#3182F6] font-bold tracking-wider text-sm md:text-base uppercase">Hot Tournaments</span>
+             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mt-1">🔥 지금 마감 임박한 대회</h2>
+          </div>
+          <Link href="/tournaments" className="hidden md:flex items-center gap-1 text-slate-500 hover:text-[#3182F6] font-medium transition-colors">
+            전체 대회 보기 <ArrowRight size={18} />
+          </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {loading ? (
-                [1,2,3,4].map(i => <div key={i} className="h-[320px] bg-slate-100 rounded-3xl animate-pulse"/>)
-            ) : hotTournaments.map((t) => (
-                <div 
-                    key={t.id} 
-                    onClick={() => router.push(`/tournaments/${t.id}`)}
-                    className="group cursor-pointer flex flex-col gap-3"
-                >
-                    <div className="relative aspect-[4/5] rounded-3xl bg-slate-100 overflow-hidden border border-slate-200 transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-blue-500/10 group-hover:-translate-y-2">
-                        {/* ✅ DB 컬럼명 매칭: t.poster_url -> t.image_url */}
-                        {t.image_url ? (
-                            <img src={t.image_url} alt={t.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"/>
-                        ) : (
-                            <div className="w-full h-full flex items-center justify-center text-4xl grayscale opacity-20">🎾</div>
-                        )}
-                        <div className="absolute top-4 left-4">
-                             <span className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold shadow-sm backdrop-blur-md text-white
-                               ${t.status === '접수중' ? 'bg-[#3182F6]/90' : 'bg-slate-800/80'}`}>
-                               {t.status}
-                             </span>
+        {loading ? (
+          // rounded-3xl -> rounded-2xl
+          <div className="text-center py-20 text-slate-400 font-medium bg-slate-50 rounded-2xl">데이터를 불러오는 중...</div>
+        ) : (
+          <div className="flex md:grid md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-x-auto md:overflow-visible snap-x snap-mandatory no-scrollbar pb-4 px-[1px]">
+            {popularTournaments.map((t) => (
+              <div key={t.id} className="snap-center shrink-0 w-[85vw] md:w-auto first:pl-1 last:pr-1">
+                 {/* 참고: TournamentCard 내부 라운딩은 별도 파일에서 수정 필요 */}
+                 <TournamentCard data={t} isMainPage={true} />
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* 4. Storytelling 1 (라운딩 수정) */}
+      <section className="w-full bg-[#F9FAFB] py-24 md:py-32 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-5">
+           <div className="flex flex-col md:flex-row items-center gap-16 md:gap-24">
+              <div className="flex-1 text-center md:text-left z-10">
+                 <div className="flex items-center justify-center md:justify-start gap-2 mb-6">
+                    {/* rounded-full -> rounded-md */}
+                    <div className="inline-block px-4 py-1.5 rounded-md bg-blue-100 text-[#3182F6] font-bold text-sm">
+                       스마트 파트너 매칭
+                    </div>
+                    {/* rounded-md 유지 */}
+                    <span className="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-md border border-slate-200">
+                       3월 오픈 예정
+                    </span>
+                 </div>
+                 <h2 className="text-3xl md:text-5xl font-black text-slate-900 mb-6 leading-tight">
+                    아직도 단톡방에서<br/>
+                    <span className="text-slate-400">눈치보며 구하세요?</span>
+                 </h2>
+                 <p className="text-lg text-slate-600 leading-relaxed mb-8">
+                    내 구력과 스타일을 분석해 딱 맞는 파트너를 추천해드립니다.<br/>
+                    매너 점수부터 NTRP 레벨까지, 검증된 사람과 즐기세요.
+                 </p>
+                 
+                 {/* 버튼: rounded-xl 유지 */}
+                 <button 
+                    onClick={() => handleNotify('match')}
+                    disabled={notifyStatus.match}
+                    className={`px-8 py-4 rounded-xl font-bold text-base transition-all inline-flex items-center gap-2 shadow-lg
+                        ${notifyStatus.match 
+                            ? 'bg-green-500 text-white cursor-default' 
+                            : 'bg-white text-[#3182F6] hover:bg-blue-50 border border-blue-100'}`}
+                 >
+                    {notifyStatus.match ? (
+                        <>신청 완료! 오픈되면 알려드릴게요 <CheckCircle size={18}/></>
+                    ) : (
+                        <>오픈 알림 받기 <Bell size={18}/></>
+                    )}
+                 </button>
+              </div>
+              
+              <div className="flex-1 w-full max-w-md md:max-w-full relative">
+                 <div className="absolute top-0 right-0 w-64 h-64 bg-blue-400/20 rounded-full blur-[80px]"></div>
+                 {/* rounded-[3rem] -> rounded-3xl (조금 더 네모나게) */}
+                 <div className="relative aspect-square bg-white rounded-3xl shadow-2xl shadow-slate-200 p-8 flex items-center justify-center border border-slate-100 transform md:rotate-3 hover:rotate-0 transition-transform duration-500">
+                    <div className="w-full space-y-4">
+                        {/* 내부 요소 라운딩: rounded-2xl -> rounded-xl */}
+                        <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl">
+                           <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-2xl">🎾</div>
+                           <div>
+                              <div className="h-4 w-32 bg-slate-200 rounded-md mb-2"></div>
+                              <div className="h-3 w-20 bg-slate-100 rounded-md"></div>
+                           </div>
+                           <div className="ml-auto px-3 py-1 bg-blue-500 text-white text-xs rounded-md">매칭 성공</div>
+                        </div>
+                        <div className="flex items-center gap-4 p-4 bg-white border border-slate-100 rounded-xl shadow-sm">
+                           <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center text-2xl">🔥</div>
+                           <div>
+                              <div className="font-bold text-slate-900">김테니스</div>
+                              <div className="text-xs text-slate-500">NTRP 4.0 · 서울 송파구</div>
+                           </div>
+                           <div className="ml-auto text-blue-500 font-bold text-sm">98% 일치</div>
                         </div>
                     </div>
-                    <div>
-                        <h3 className="font-semibold text-lg text-slate-900 leading-snug group-hover:text-[#3182F6] transition-colors line-clamp-1">{t.title}</h3>
-                        {/* ✅ DB 컬럼명 매칭: t.start_date -> t.date */}
-                        <p className="text-sm text-slate-500 mt-1 font-normal">{t.location} · {t.date}</p>
-                    </div>
-                </div>
-            ))}
+                 </div>
+              </div>
+           </div>
         </div>
       </section>
 
-      {/* 4. Why CHIDA */}
-      <section className="py-24 bg-slate-50">
+      {/* 5. Storytelling 2 (라운딩 수정) */}
+      <section className="w-full bg-white py-24 md:py-32">
         <div className="max-w-7xl mx-auto px-5">
-            <div className="text-center mb-16">
-                <h2 className="text-3xl md:text-4xl font-semibold text-slate-900 mb-4">왜 <span className="text-[#3182F6]">치다</span>인가요?</h2>
-                <p className="text-slate-500 font-normal">테니스인들이 가장 불편해하는 점들을 해결했습니다.</p>
-            </div>
+           <div className="flex flex-col-reverse md:flex-row items-center gap-16 md:gap-24">
+              
+              <div className="flex-1 w-full max-w-md md:max-w-full">
+                 {/* rounded-[3rem] -> rounded-3xl */}
+                 <div className="bg-slate-50 rounded-3xl p-8 md:p-12 border border-slate-100 shadow-inner">
+                    <div className="space-y-6">
+                        <div className="flex items-end gap-3 h-32 md:h-48 justify-around px-4">
+                            {/* 그래프 상단: rounded-t-xl -> rounded-t-lg */}
+                            <div className="w-12 bg-blue-100 rounded-t-lg h-[40%]"></div>
+                            <div className="w-12 bg-blue-200 rounded-t-lg h-[60%]"></div>
+                            <div className="w-12 bg-blue-300 rounded-t-lg h-[50%]"></div>
+                            <div className="w-12 bg-[#3182F6] rounded-t-lg h-[80%] relative">
+                                <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded-md">Best</div>
+                            </div>
+                            <div className="w-12 bg-blue-400 rounded-t-lg h-[70%]"></div>
+                        </div>
+                        <div className="flex justify-between text-slate-400 text-sm font-bold pt-4 border-t border-slate-200">
+                            <span>Jan</span><span>May</span><span>Dec</span>
+                        </div>
+                    </div>
+                 </div>
+              </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <FeatureCard icon={<Sparkles size={28} />} title="전국 대회 통합 검색" desc="KATA, KATO, 로컬 대회까지. 흩어져 있는 정보를 한곳에서 쉽고 빠르게 찾으세요." color="blue" />
-                <FeatureCard icon={<CheckCircle2 size={28} />} title="스마트한 필터링" desc="내 실력(구력)과 지역에 딱 맞는 대회만 골라보세요. 불필요한 정보는 뺍니다." color="green" />
-                <FeatureCard icon={<ShieldCheck size={28} />} title="검증된 정보 제공" desc="취소되거나 변경된 대회 정보도 빠르게 업데이트하여 헛걸음하지 않게 돕습니다." color="purple" />
+              <div className="flex-1 text-center md:text-left">
+                 {/* rounded-full -> rounded-md */}
+                 <div className="inline-block px-4 py-1.5 rounded-md bg-purple-100 text-purple-600 font-bold text-sm mb-6">
+                    나만의 커리어 관리
+                 </div>
+                 <h2 className="text-3xl md:text-5xl font-black text-slate-900 mb-6 leading-tight">
+                    우승 트로피,<br/>
+                    <span className="text-slate-400">사진첩에만 두실 건가요?</span>
+                 </h2>
+                 <p className="text-lg text-slate-600 leading-relaxed mb-8">
+                    흩어져 있는 나의 대회 참가 기록과 수상 내역.<br/>
+                    치다에서는 당신의 모든 땀방울이 '공식 커리어'가 됩니다.
+                 </p>
+                 <div className="flex flex-col gap-4">
+                    {/* FeatureItem 라운딩 수정됨 */}
+                    <FeatureItem icon={<TrendingUp className="text-red-500"/>} text="대회 성적 자동 그래프 분석" />
+                    <FeatureItem icon={<Trophy className="text-yellow-500"/>} text="디지털 트로피 진열장 (준비중)" />
+                 </div>
+              </div>
+
+           </div>
+        </div>
+      </section>
+
+      {/* 6. Storytelling 3 (라운딩 수정) */}
+      <section className="w-full bg-[#F9FAFB] py-24 md:py-32">
+        <div className="max-w-7xl mx-auto px-5 text-center">
+            <h2 className="text-3xl md:text-5xl font-black text-slate-900 mb-6 leading-tight">
+                낚시성 대회 정보에<br className="md:hidden"/> <span className="text-[#3182F6]">지치셨나요?</span>
+            </h2>
+            <p className="text-lg text-slate-600 leading-relaxed mb-12 max-w-2xl mx-auto">
+                카페, 밴드, 단톡방... <br className="md:hidden"/>여기저기 흩어진 정보 찾느라 고생하지 마세요.<br/>
+                치다는 <b>실제 개최되는 검증된 대회 정보</b>만 큐레이션하여 제공합니다.
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                {/* TrustItem 라운딩 수정됨 */}
+                <TrustItem title="실시간 업데이트" desc="취소/변경된 일정 즉시 반영" icon={<Zap size={32} className="text-[#3182F6]"/>} />
+                <TrustItem title="검증된 주최자" desc="믿을 수 있는 단체의 대회만" icon={<ShieldCheck size={32} className="text-green-500"/>} />
+                <TrustItem title="투명한 요강" desc="참가비, 상품 정보 100% 공개" icon={<MessageCircle size={32} className="text-purple-500"/>} />
             </div>
         </div>
       </section>
 
-      {/* 5. Bottom CTA */}
-      <section className="w-full bg-black py-32 px-5 relative overflow-hidden mb-24">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[#3182F6] opacity-10 blur-[150px] rounded-full pointer-events-none"></div>
 
-        <div className="max-w-5xl mx-auto relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
-            <div className="text-center md:text-left flex-1">
-                <h2 className="text-4xl md:text-5xl font-semibold text-white mb-6 leading-tight">
-                    이제, 코트 위에서<br/>
-                    <span className="text-[#3182F6]">증명할 시간</span>입니다.
+      {/* 7. Premium Banner (라운딩 수정) */}
+      <section className="w-full bg-[#111] py-24 md:py-32 relative overflow-hidden">
+         <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-blue-600/20 rounded-full blur-[120px] translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
+         <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-purple-600/20 rounded-full blur-[100px] -translate-x-1/3 translate-y-1/3 pointer-events-none"></div>
+
+         <div className="max-w-7xl mx-auto px-5 relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
+            <div className="text-center md:text-left max-w-2xl">
+                {/* rounded-full -> rounded-md */}
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-white/10 border border-white/10 text-blue-300 text-xs font-bold mb-4">
+                    <Star size={12} fill="currentColor"/> Premium Service
+                </div>
+                <h2 className="text-3xl md:text-5xl font-bold text-white mb-6 leading-tight">
+                    우승을 위한<br/>
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">가장 완벽한 파트너</span>
                 </h2>
-                <p className="text-slate-400 text-lg mb-10 font-light max-w-lg mx-auto md:mx-0">
-                    망설이지 마세요. 당신을 기다리는 수많은 대회가 여기 있습니다.
-                    지금 바로 도전하세요.
+                <p className="text-slate-400 text-lg mb-8 leading-relaxed">
+                    검증된 파트너 매칭부터 우승 상금 관리, <br className="hidden md:block"/>
+                    전문 코치의 피드백까지 한 번에 경험하세요.
                 </p>
+                {/* 버튼: rounded-xl 유지 */}
                 <button 
-                    onClick={() => router.push('/tournaments')}
-                    className="px-10 py-5 bg-[#3182F6] text-white rounded-2xl font-semibold text-lg hover:bg-blue-600 transition-all shadow-[0_0_40px_rgba(49,130,246,0.4)] hover:-translate-y-1 ring-2 ring-blue-500/30"
+                    onClick={() => handleNotify('premium')}
+                    disabled={notifyStatus.premium}
+                    className={`px-8 py-4 rounded-xl font-bold text-base transition-all inline-flex items-center gap-2
+                        ${notifyStatus.premium 
+                            ? 'bg-green-600 text-white cursor-default' 
+                            : 'bg-white text-slate-900 hover:bg-slate-200'}`}
                 >
-                    대회 전체 리스트 보기
+                    {notifyStatus.premium ? '알림 신청 완료!' : '멤버십 오픈 알림 받기'} <ArrowRight size={18}/>
                 </button>
             </div>
-            <div className="relative w-[300px] h-[300px] md:w-[400px] md:h-[400px] flex items-center justify-center animate-float-slow">
-                 <CssTrophy size={280} />
-                 <div className="absolute top-0 right-10 animate-pulse-slow"><CssStar size={40} /></div>
-                 <div className="absolute bottom-10 left-0 animate-pulse-slow delay-700"><CssStar size={30} /></div>
+            <div className="relative">
+                 <div className="w-64 h-64 md:w-80 md:h-80 bg-gradient-to-br from-white/5 to-white/0 rounded-full border border-white/10 backdrop-blur-md flex items-center justify-center relative shadow-2xl animate-pulse-slow">
+                     <Trophy size={120} className="text-yellow-400 drop-shadow-[0_0_30px_rgba(250,204,21,0.4)]" strokeWidth={1} />
+                 </div>
             </div>
-        </div>
+         </div>
       </section>
 
-      {/* 6. Footer (Final Complete: Larger Font & Tight Line) */}
-      <footer className="bg-white pb-20 mt-auto">
-        <div className="max-w-7xl mx-auto px-5">
+{/* =========================================
+          [최종_블랙에디션] 8. Bottom CTA (Chic Black)
+          - 배경: 완전 검은색 (bg-black) + 은은한 오로라 한 방울
+          - 높이: py-48 -> py-24 (절반으로 축소, 컴팩트함)
+          - 버튼: 검은 배경에 흰색 버튼으로 대비 극대화
+      ========================================= */}
+      <section className="w-full py-24 bg-black relative overflow-hidden">
+         
+         {/* 배경 데코레이션 (너무 밋밋하지 않게 중앙에 은은한 파란 빛 한 방울) */}
+         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue-900/20 rounded-full blur-[100px] pointer-events-none"></div>
+
+         <div className="max-w-4xl mx-auto px-5 relative z-10 text-center">
+            <h2 className="text-3xl md:text-5xl font-black text-white mb-6 leading-tight tracking-tight">
+               지금 바로 코트로<br className="md:hidden"/> 나갈 준비 되셨나요?
+            </h2>
+            <p className="text-slate-400 text-lg font-medium mb-10">
+               고민하는 순간 마감됩니다. 3초 만에 시작해보세요.
+            </p>
             
-            {/* 구분선 */}
-            <div className="border-t border-slate-200 pt-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
-                
-                {/* 왼쪽: 회사 정보 */}
-                <div className="text-left space-y-2">
-                    <p className="text-[#65676A] font-medium text-base">© 2026 Chida Corp.</p>
-                    
-                    <div className="flex flex-col gap-1 text-base text-[#A7A7AA] font-normal">
-                        <div className="flex flex-wrap items-center gap-2">
-                            <span>주식회사 치다</span>
-                            <span className="w-px h-3 bg-slate-300 hidden sm:block"></span>
-                            <span>대표자 : 박영승</span>
-                        </div>
-                        <p>사업자등록번호 : 000-00-00000</p>
-                    </div>
-                </div>
+            {/* 버튼: 흰색 배경 + 검은 글씨 (가장 눈에 띔) */}
+            <Link href="/login" className="inline-flex items-center gap-2 px-8 py-4 bg-white text-black hover:bg-slate-200 rounded-xl font-bold text-xl transition-all hover:-translate-y-1">
+               치다 시작하기 <ArrowRight size={20}/>
+            </Link>
+         </div>
+      </section>
 
-                {/* 오른쪽: 소셜 아이콘 */}
-                <div className="flex gap-3">
-                    <SocialIcon href="https://facebook.com" icon={<Facebook size={20} />} />
-                    <SocialIcon href="https://youtube.com" icon={<Youtube size={20} />} />
-                    <SocialIcon href="https://instagram.com" icon={<Instagram size={20} />} />
-                </div>
-
-            </div>
-        </div>
-      </footer>
-
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }
 
-// ✨ Footer용 소셜 아이콘 컴포넌트
-function SocialIcon({ href, icon }: { href: string, icon: React.ReactNode }) {
-    return (
-        <a 
-            href={href} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-[#A7A7AA] hover:bg-slate-200 hover:text-slate-600 transition-colors"
-        >
-            {icon}
-        </a>
-    )
-}
-
-// 🏆 3D Trophy Component (유지)
-function CssTrophy({ size }: { size: number }) {
-    return (
-        <div style={{ width: size, height: size }} className="relative flex items-center justify-center">
-             <div className="relative z-20 w-[60%] h-[55%] bg-gradient-to-br from-yellow-200 via-yellow-400 to-yellow-600 rounded-b-[40%] rounded-t-[5%] shadow-[inset_-10px_-10px_30px_rgba(0,0,0,0.2),inset_10px_10px_30px_rgba(255,255,255,0.6)] flex items-center justify-center overflow-hidden">
-                <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-white opacity-20 rotate-45 pointer-events-none blur-xl"></div>
-                <div className="absolute top-[10%] right-[10%] w-[30%] h-[30%] bg-white rounded-full opacity-40 blur-lg"></div>
-             </div>
-             <div className="absolute top-[15%] left-[10%] w-[80%] h-[35%] z-10">
-                <div className="absolute left-0 top-0 w-[20%] h-full border-[12px] border-yellow-500 rounded-l-[2rem] shadow-lg"></div>
-                <div className="absolute right-0 top-0 w-[20%] h-full border-[12px] border-yellow-500 rounded-r-[2rem] shadow-lg"></div>
-             </div>
-             <div className="absolute bottom-[10%] w-[40%] h-[15%] flex flex-col items-center justify-end z-10">
-                 <div className="w-[40%] h-[60%] bg-yellow-600"></div>
-                 <div className="w-full h-[40%] bg-gradient-to-r from-yellow-600 to-yellow-400 rounded-t-lg shadow-xl"></div>
-             </div>
-             <div className="absolute inset-0 bg-yellow-400 opacity-20 blur-[60px] rounded-full z-0"></div>
-        </div>
-    )
-}
-
-// ✨ Star Component
-function CssStar({ size }: { size: number }) {
-    return (
-        <div style={{ width: size, height: size }} className="bg-gradient-to-b from-yellow-100 to-yellow-300 transform rotate-45 rounded-sm shadow-[0_0_15px_rgba(255,255,0,0.6)]"></div>
-    )
-}
-
-// 🎾 Tennis Ball (유지)
-function CssTennisBall({ size }: { size: number }) {
-  return (
-    <div 
-      style={{ width: size, height: size }}
-      className="rounded-full bg-[#E8F664] relative shadow-[inset_-10px_-10px_30px_rgba(0,0,0,0.15),inset_10px_10px_30px_rgba(255,255,255,0.8),0_20px_40px_rgba(0,0,0,0.1)] flex items-center justify-center overflow-hidden"
-    >
-      <div className="absolute w-full h-full border-[6px] border-white rounded-full opacity-80" style={{ transform: 'scale(1.5) rotate(45deg)', borderRadius: '50%' }}></div>
-      <div className="absolute w-[90%] h-[90%] border-[6px] border-white rounded-full opacity-80" style={{ top: '-45%', left: '-45%' }}></div>
-      <div className="absolute w-[90%] h-[90%] border-[6px] border-white rounded-full opacity-80" style={{ bottom: '-45%', right: '-45%' }}></div>
-      <div className="absolute top-[15%] left-[15%] w-[20%] h-[20%] bg-white rounded-full blur-md opacity-60"></div>
-    </div>
-  );
-}
-
-function StatItem({ label, value }: { label: string, value: string }) {
-    return (
-        <div className="flex flex-col items-center">
-            <span className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">{value}</span>
-            <span className="text-sm font-medium text-slate-400">{label}</span>
-        </div>
-    )
-}
-
-type FeatureCardProps = {
-    icon: React.ReactNode;
-    title: string;
-    desc: string;
-    color: 'blue' | 'green' | 'purple';
-};
-
-function FeatureCard({ icon, title, desc, color }: FeatureCardProps) {
-    const colorClasses = {
-        blue: 'bg-blue-50 text-[#3182F6]',
-        green: 'bg-green-50 text-green-600',
-        purple: 'bg-purple-50 text-purple-600',
-    };
-
-    return (
-        <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl transition-shadow">
-            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 ${colorClasses[color]}`}>
+// 퀵 메뉴 컴포넌트 (라운딩 수정)
+function QuickMenuIcon({ icon, label, desc, href, isReady = true }: { icon: React.ReactNode, label: string, desc: string, href: string, isReady?: boolean }) {
+    const Content = () => (
+        // rounded-2xl -> rounded-xl
+        <div className={`flex flex-col md:flex-row items-center gap-4 p-2 md:p-4 rounded-xl transition-all ${isReady ? 'hover:bg-slate-50 cursor-pointer group' : 'opacity-50 grayscale cursor-not-allowed'}`}>
+            {/* rounded-2xl -> rounded-xl */}
+            <div className="p-3 md:p-4 bg-slate-50 rounded-xl group-hover:bg-white group-hover:shadow-md transition-all">
                 {icon}
             </div>
-            <h3 className="text-xl font-semibold mb-3">{title}</h3>
-            <p className="text-slate-500 leading-relaxed font-normal">{desc}</p>
+            <div className="text-center md:text-left">
+                <div className="font-bold text-slate-900 text-sm md:text-lg mb-0.5">{label}</div>
+                <div className="text-xs md:text-sm text-slate-400 font-medium hidden md:block">{desc}</div>
+                {/* rounded-full -> rounded-md */}
+                {!isReady && <span className="md:hidden text-[10px] text-white bg-slate-400 px-2 py-0.5 rounded-md mt-1 inline-block">준비중</span>}
+            </div>
         </div>
     );
+    if (isReady) return <Link href={href} className="flex-1"><Content /></Link>;
+    return <div className="flex-1"><Content /></div>;
+}
+
+// 특징 리스트 아이템 (라운딩 수정)
+function FeatureItem({ icon, text }: { icon: React.ReactNode, text: string }) {
+   return (
+      // rounded-xl -> rounded-lg
+      <div className="flex items-center gap-3 p-4 bg-white rounded-lg border border-slate-100 shadow-sm w-full md:w-auto">
+         {icon}
+         <span className="font-bold text-slate-700">{text}</span>
+      </div>
+   )
+}
+
+// 신뢰성 아이템 (라운딩 수정)
+function TrustItem({ icon, title, desc }: { icon: React.ReactNode, title: string, desc: string }) {
+    return (
+        // rounded-2xl -> rounded-xl
+        <div className="p-6 bg-white rounded-xl border border-slate-100 shadow-sm flex flex-col items-center hover:-translate-y-1 transition-transform duration-300">
+            {/* rounded-full -> rounded-xl */}
+            <div className="mb-4 p-3 bg-slate-50 rounded-xl">{icon}</div>
+            <h3 className="font-bold text-slate-900 text-lg mb-2">{title}</h3>
+            <p className="text-slate-500 text-sm">{desc}</p>
+        </div>
+    )
 }

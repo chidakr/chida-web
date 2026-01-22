@@ -1,92 +1,79 @@
-'use client';
+import Link from 'next/link';
+import { MapPin, Calendar, Trophy } from 'lucide-react';
 
-import React from 'react';
-import { useRouter } from 'next/navigation'; // 카드 클릭 시 이동을 위해 추가
-import { MapPin, Calendar } from 'lucide-react';
-
-// DB 데이터 타입 정의 (실제 테이블 컬럼명과 일치시킴)
-interface TournamentProps {
-  id: string;
-  title: string;
-  organizer: string; // 주최 (예: 윌슨)
-  date: string;      // 날짜
-  location: string;  // 장소
-  level: string;     // 모집 레벨 (예: 개나리부)
-  status: string;    // 상태 (접수중, 마감 등)
-  fee: string;
-  image_url: string; // 이미지 주소
+interface TournamentCardProps {
+  data: any;
+  isMainPage?: boolean; // 메인페이지용 스타일 적용 여부
 }
 
-export default function TournamentCard({ data }: { data: TournamentProps }) {
-  const router = useRouter();
+export default function TournamentCard({ data: t, isMainPage = false }: TournamentCardProps) {
+  // 날짜 포맷팅 (예: 2026.03.01)
+  const formattedDate = t.date ? new Date(t.date).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\.$/, '') : '날짜 미정';
 
-  // 상태(Status)에 따른 뱃지 색상 결정
-  const getStatusBadgeStyle = (status: string) => {
-    switch (status) {
-      case '접수중': return 'bg-[#3182F6]/90 text-white';
-      case '마감임박': return 'bg-red-500/90 text-white';
-      case '마감': return 'bg-slate-800/80 text-white';
-      case '접수예정': return 'bg-slate-500/80 text-white';
-      default: return 'bg-slate-800/80 text-white';
-    }
-  };
+  // 상태별 뱃지 스타일
+  const statusStyle = {
+    '접수중': 'bg-blue-500 text-white shadow-blue-200',
+    '마감임박': 'bg-red-500 text-white shadow-red-200 animate-pulse',
+    '마감': 'bg-slate-600 text-white',
+    '접수예정': 'bg-amber-500 text-white shadow-amber-200'
+  }[t.status] || 'bg-slate-500 text-white';
 
   return (
-    <div 
-      onClick={() => router.push(`/tournaments/${data.id}`)}
-      className="bg-white rounded-[1.5rem] p-3 border border-slate-100 hover:border-blue-100 cursor-pointer transition-all hover:shadow-xl hover:shadow-blue-900/5 hover:-translate-y-1 flex flex-col h-full group"
-    >
-      {/* 1. 이미지 영역 */}
-      <div className="relative w-full aspect-[4/3] bg-slate-100 rounded-2xl overflow-hidden mb-4">
-        {data.image_url ? (
-          <img 
-            src={data.image_url} 
-            alt={data.title} 
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-slate-50 text-slate-300">
-            <span className="text-4xl">🎾</span>
-          </div>
-        )}
-        
-        {/* 상태 뱃지 (좌측 상단) */}
-        <div className="absolute top-3 left-3">
-          <span className={`px-2.5 py-1.5 rounded-lg text-[10px] font-semibold shadow-sm backdrop-blur-md ${getStatusBadgeStyle(data.status)}`}>
-            {data.status}
+    <Link href={`/tournaments/${t.id}`} className="group block h-full">
+      <div className={`
+        relative bg-white rounded-[2rem] overflow-hidden transition-all duration-300 h-full border border-slate-100
+        ${isMainPage ? 'shadow-xl shadow-slate-200/50 hover:shadow-2xl hover:-translate-y-1 hover:shadow-blue-100/50' : 'shadow-sm hover:shadow-md hover:-translate-y-1 hover:border-blue-100'}
+      `}>
+        {/* 1. 이미지 영역 */}
+        <div className={`relative w-full bg-slate-100 overflow-hidden ${isMainPage ? 'aspect-[4/3]' : 'aspect-[16/9]'}`}>
+          {t.image_url ? (
+            <img src={t.image_url} alt={t.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center text-slate-300">
+                <Trophy size={isMainPage ? 40 : 30} strokeWidth={1.5} />
+                <span className="text-xs mt-2 font-medium">이미지 준비중</span>
+            </div>
+          )}
+          {/* 상태 뱃지 (좌측 상단) */}
+          <span className={`absolute top-4 left-4 px-3 py-1.5 rounded-full text-xs font-bold shadow-lg ${statusStyle}`}>
+            {t.status}
           </span>
+          {/* 그라데이션 오버레이 (텍스트 가독성용) */}
+           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60"></div>
+        </div>
+
+        {/* 2. 텍스트 정보 영역 */}
+        <div className={`p-6 ${isMainPage ? 'pt-5' : 'pt-5'}`}>
+          {/* 레벨/타이틀 */}
+          <div className="mb-3">
+            <span className="inline-block text-[#3182F6] text-xs font-bold bg-blue-50 px-2.5 py-1 rounded-md mb-2">
+                {t.level || '전체 레벨'}
+            </span>
+            <h3 className={`font-bold text-slate-900 line-clamp-2 leading-snug group-hover:text-[#3182F6] transition-colors ${isMainPage ? 'text-xl' : 'text-lg'}`}>
+              {t.title}
+            </h3>
+          </div>
+
+          {/* 정보 (날짜, 장소) */}
+          <div className="space-y-2 text-sm text-slate-500 font-medium">
+            <div className="flex items-center gap-2">
+              <Calendar size={16} className="text-slate-400 shrink-0"/>
+              <span>{formattedDate}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <MapPin size={16} className="text-slate-400 shrink-0"/>
+              <span className="line-clamp-1">{t.location || '장소 미정'}</span>
+            </div>
+          </div>
+          
+          {/* 참가비 (있을 경우) */}
+          {t.fee && (
+             <div className="mt-5 pt-4 border-t border-slate-50 flex justify-end items-center">
+                <span className="font-extrabold text-lg text-slate-900">{Number(t.fee.replace(/[^0-9]/g, '')).toLocaleString()}원~</span>
+             </div>
+          )}
         </div>
       </div>
-
-      {/* 2. 텍스트 영역 */}
-      <div className="px-2 pb-2 flex flex-col flex-1">
-        {/* 태그 (주최, 레벨) */}
-        <div className="flex gap-1.5 mb-3 flex-wrap">
-           <span className="text-[10px] text-slate-500 bg-slate-50 px-2 py-1 rounded-md font-semibold truncate max-w-[100px]">
-             {data.organizer}
-           </span>
-           <span className="text-[10px] text-[#3182F6] bg-blue-50 px-2 py-1 rounded-md font-semibold truncate max-w-[120px]">
-             {data.level}
-           </span>
-        </div>
-
-        {/* 대회명 */}
-        <h3 className="font-semibold text-slate-900 text-lg leading-snug mb-3 line-clamp-2 group-hover:text-[#3182F6] transition-colors break-keep">
-          {data.title}
-        </h3>
-
-        {/* 하단 정보 (날짜, 장소) */}
-        <div className="mt-auto pt-3 border-t border-slate-50 space-y-2">
-          <div className="flex items-center text-xs text-slate-500 font-medium">
-            <Calendar size={13} className="mr-2 text-slate-400"/> 
-            {data.date}
-          </div>
-          <div className="flex items-center text-xs text-slate-500 font-medium">
-            <MapPin size={13} className="mr-2 text-slate-400"/> 
-            {data.location}
-          </div>
-        </div>
-      </div>
-    </div>
+    </Link>
   );
 }
