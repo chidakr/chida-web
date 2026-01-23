@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { createClient } from '@/src/utils/supabase/client';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -93,9 +94,15 @@ export default function MyCardPage() {
                 <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
                 
                 {/* 3D 테니스 공 */}
-                <div className="absolute -right-16 -top-10 w-48 h-48 opacity-90 mix-blend-hard-light animate-float-slow">
-                    <img src="https://cdn3d.iconscout.com/3d/premium/thumb/tennis-ball-5379590-4497552.png" alt="3d ball" className="w-full h-full object-cover"/>
-                </div>
+            <div className="absolute -right-16 -top-10 w-48 h-48 animate-float-slow">
+              <Image 
+                src="https://cdn3d.iconscout.com/3d/premium/thumb/tennis-ball-5379590-4497552.png" 
+                alt="3d ball" 
+                fill // 부모 박스 크기에 맞춰 꽉 채움
+                className="object-cover opacity-90 mix-blend-hard-light"
+                priority // ⭐ 중요: 화면 뜨자마자 로딩하라고 우선순위 줌
+              />
+            </div>
 
                 {/* 상단 */}
                 <div className="p-8 pt-10">
