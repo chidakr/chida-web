@@ -21,6 +21,7 @@ type Tournament = {
   description: string;
   status: string;
   image_url?: string;
+  site_url?: string; // 👈 이거 추가!
 };
 
 export default function TournamentDetailPage() {
@@ -155,7 +156,7 @@ export default function TournamentDetailPage() {
                 <div className="flex items-stretch gap-3 mt-auto">
                     <div className="flex-1">
                         {/* 👇 우리가 만든 신청 버튼 (기능은 그대로, 디자인은 여기서 CSS로 제어됨) */}
-                        <ApplyButton tournamentId={id} />
+                        <ApplyButton tournamentId={id} url={tournament.site_url} />
                     </div>
                     
                     <button className="w-14 h-14 flex items-center justify-center bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-slate-900 hover:border-slate-300 transition-colors">

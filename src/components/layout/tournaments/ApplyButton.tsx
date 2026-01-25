@@ -1,90 +1,53 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { createClient } from '@/src/utils/supabase/client';
-import { useRouter } from 'next/navigation';
+import { ExternalLink } from 'lucide-react';
 
-export default function ApplyButton({ tournamentId }: { tournamentId: string }) {
+export default function ApplyButton({ tournamentId, url }: { tournamentId: string, url?: string }) {
   const supabase = createClient();
-  const router = useRouter();
-  
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState<'none' | 'pending' | 'confirmed'>('none');
 
-  // 1. 내 신청 상태 확인 (페이지 들어오자마자)
-  useEffect(() => {
-    async function checkStatus() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data } = await supabase
-        .from('participants')
-        .select('status')
-        .eq('user_id', user.id)
-        .eq('tournament_id', tournamentId)
-        .single();
-
-      if (data) setStatus(data.status as any);
+  const handleLink = async () => {
+    // 1. 링크가 없으면 경고
+    if (!url) {
+        alert('신청 링크가 등록되지 않은 대회입니다 😭\n주최측에 문의해주세요.');
+        return;
     }
-    checkStatus();
-  }, [tournamentId, supabase]);
 
-  // 2. 신청하기 버튼 클릭
-  const handleApply = async () => {
     setLoading(true);
-    
-    // 로그인 체크
+
+    // 2. 로그인 유저 체크
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      alert('로그인이 필요합니다!');
-      router.push('/login'); // 혹은 로그인 모달 띄우기
-      return;
+
+    // 3. (옵션) 로그인했다면 '참가/관심 내역'에 기록 남기기
+    // 이걸 남겨야 마이페이지 '신청 내역'에서 "아 맞다, 나 이거 보러 갔었지" 하고 확인 가능함
+    if (user) {
+        // 이미 기록 있는지 확인 안 하고 그냥 insert (중복 무시 or upsert)
+        // 여기서는 간단하게 "기록 시도"만 하고 에러나도 링크는 띄워줌
+        await supabase.from('participants').upsert({
+            user_id: user.id,
+            tournament_id: tournamentId,
+            status: 'pending' // '외부이동' 상태로 관리하면 좋지만 일단 pending
+        }, { onConflict: 'user_id, tournament_id' });
     }
 
-    // 진짜 신청
-    const { error } = await supabase
-      .from('participants')
-      .insert({
-        user_id: user.id,
-        tournament_id: tournamentId,
-        status: 'pending' // 기본 상태: 입금 대기
-      });
-
-    if (error) {
-      console.error(error);
-      alert('신청 중 오류가 발생했습니다 😭');
-    } else {
-      alert('🎉 신청이 완료되었습니다! (입금 확인 후 확정됩니다)');
-      setStatus('pending'); // 버튼 상태 변경
-      router.refresh(); // 데이터 갱신
-    }
+    // 4. 외부 사이트로 납치(!) 🛸
+    window.open(url, '_blank');
     setLoading(false);
   };
 
-  // 3. 버튼 UI 렌더링
-  if (status === 'pending') {
-    return (
-      <button disabled className="w-full py-4 bg-slate-100 text-slate-500 font-bold rounded-xl cursor-not-allowed">
-        입금 확인 대기중 ⏳
-      </button>
-    );
-  }
-
-  if (status === 'confirmed') {
-    return (
-      <button disabled className="w-full py-4 bg-blue-50 text-[#3182F6] font-bold rounded-xl cursor-not-allowed">
-        참가 확정됨 ✅
-      </button>
-    );
-  }
-
   return (
     <button
-      onClick={handleApply}
+      onClick={handleLink}
       disabled={loading}
-      className="w-full py-4 bg-[#3182F6] text-white font-bold text-lg rounded-xl hover:bg-blue-600 transition-colors shadow-lg shadow-blue-200 active:scale-95"
+      className="w-full py-4 bg-[#3182F6] text-white font-bold text-lg rounded-xl hover:bg-blue-600 transition-colors shadow-lg shadow-blue-200 active:scale-95 flex items-center justify-center gap-2"
     >
-      {loading ? '처리중...' : '1초 만에 신청하기 🚀'}
+      {loading ? '이동 중...' : (
+          <>
+            공식 홈페이지에서 신청하기 <ExternalLink size={20}/>
+          </>
+      )}
     </button>
   );
 }
