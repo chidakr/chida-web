@@ -1,29 +1,33 @@
-01월 19일
-feat: 대회 상세 페이지 조회수 기능 추가 및 UI 개선
+# 🎾 치다
 
-1. Backend (Supabase)
-- tournaments 테이블 view_count 컬럼 추가
-- 조회수 증가용 RPC 함수(increment_view_count) 추가
+> **"코트 위의 모든 것을 연결하다."**
+> 테니스 라이프스타일 플랫폼입니다.
 
-2. Frontend
-- 상세 페이지 진입 시 조회수 자동 증가 로직 적용
-- 상세 페이지 타이틀 영역 조회수 UI(Eye Icon) 추가
-- 대회 리스트 페이지 상단 여백 및 헤더 고정 스타일 수정
+![Next.js](https://img.shields.io/badge/Next.js-15.0-black?style=flat-square&logo=next.js&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-Auth%20%26%20DB-green?style=flat-square&logo=supabase&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-3.0-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)
 
-3. Fix
-- 메인/리스트 페이지 반응형 레이아웃 깨짐 현상 수정
+## ✨ Key Features (핵심 기능)
 
-feat: 메인 페이지 비주얼 고도화 및 필터 시스템 전면 개편
+- **🆔 3D Player Card**: 나의 NTRP와 구력이 담긴 인터랙티브 선수 카드 발급
+- **🏆 Tournament Portal**: 전국 대회 정보를 한눈에 보고 공식 신청처로 연결 (Portal)
+- **📊 Dashboard MyPage**: PC/Mobile 반응형 마이페이지 (신청 내역, 찜한 대회, 계정 관리)
+- **🔐 Auth & Security**: 카카오 로그인 연동 및 회원 탈퇴(Data Cleanup) 완벽 지원
 
-1. 메인 페이지 (Main Landing)
-- 히어로 섹션 디자인 적용 (치다 레드 포인트 컬러)
-- 실시간 인기 대회 섹션 추가 (Supabase view_count 연동)
+## 📂 Project Structure (폴더 구조)
 
-2. 대회 리스트 페이지 (Filter System)
-- 카테고리 필터: 부트텐트 스타일의 2단 드롭다운 및 선택 상태 유지 기능
-- 지역 필터: 다중 선택(체크박스) 시스템 도입 및 지역 배치 최적화 (전라권-광주 인접 배치)
-- 검색 로직: 다중 지역 선택 시 OR 검색 지원 및 초기화 기능 강화
-
-3. UI/UX
-- 전반적인 디자인 톤앤매너 수정 (레드 포인트 컬러 통일)
-- 드롭다운 애니메이션 및 인터랙션 디테일 개선
+```bash
+src/
+├── app/
+│   ├── admin/              # 관리자 페이지 (글쓰기 등)
+│   ├── api/                # 백엔드 API (회원탈퇴 withdraw 등)
+│   ├── auth/ & login/      # 카카오 로그인 및 인증 로직
+│   ├── my-card/            # 3D 선수 카드 페이지
+│   ├── mypage/             # 마이페이지 (신청내역, 설정, 레이아웃)
+│   ├── tournaments/        # 대회 리스트 및 상세 페이지 (중개 기능)
+│   └── onboarding/         # 신규 회원 초기 설정
+├── components/
+│   ├── layout/             # Header, Footer, BottomNav
+│   ├── mypage/             # Sidebar (PC용 사이드바)
+│   └── tournaments/        # ApplyButton, TournamentCard
+└── utils/supabase/         # Supabase 클라이언트/서버 설정
