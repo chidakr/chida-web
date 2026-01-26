@@ -1,369 +1,486 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { createClient } from '@/src/utils/supabase/client';
+import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
-import { Search, MapPin, Trophy, Users, Star, ArrowRight, MessageCircle, ShieldCheck, Zap, TrendingUp, CheckCircle, Bell } from 'lucide-react';
-import TournamentCard from '@/src/components/layout/tournaments/TournamentCard';
-import Footer from '@/src/components/layout/Footer'; 
+import Image from 'next/image';
+import { createClient } from '@/src/utils/supabase/client';
+import TournamentCard from './tournaments/TournamentCard';
+import { 
+  Search, ChevronRight, TrendingUp, ArrowRight, 
+  Facebook, Youtube, Instagram, Star, PlayCircle,
+  Users, Trophy, ShieldCheck, Sparkles
+} from 'lucide-react';
 
 export default function HomePage() {
   const supabase = createClient();
-  const [popularTournaments, setPopularTournaments] = useState<any[]>([]);
+  const [tournaments, setTournaments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [notifyStatus, setNotifyStatus] = useState({ match: false, premium: false });
-
-  const handleNotify = (type: 'match' | 'premium') => {
-    if (notifyStatus[type]) return;
-    alert('알림 신청이 완료되었습니다! 🚀\n서비스가 오픈되면 가장 먼저 문자를 보내드릴게요.');
-    setNotifyStatus({ ...notifyStatus, [type]: true });
-  };
+  const [filter, setFilter] = useState('전체');
 
   useEffect(() => {
-    async function fetchPopular() {
-      setLoading(true);
+    const fetchTournaments = async () => {
       const { data, error } = await supabase
         .from('tournaments')
         .select('*')
-        .order('created_at', { ascending: false })
-        .limit(6);
-      if (!error) setPopularTournaments(data || []);
+        .order('created_at', { ascending: false });
+
+      if (error) console.error(error);
+      else setTournaments(data || []);
       setLoading(false);
-    }
-    fetchPopular();
+    };
+    fetchTournaments();
   }, []);
 
+  const closingSoon = tournaments
+    .filter(t => t.status === 'recruiting')
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .slice(0, 4);
+
+  const filteredList = tournaments.filter(t => {
+      if (filter === '전체') return true;
+      if (filter === '마감임박') return t.status === 'recruiting'; 
+      if (filter === '서울') return t.location.includes('서울');
+      if (filter === '경기') return t.location.includes('경기');
+      if (filter === '테린이') return t.level?.includes('테린') || t.level?.includes('신인');
+      if (filter === '오픈부') return t.level?.includes('오픈');
+      return true;
+  });
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center font-black text-slate-200 text-3xl animate-pulse">CHIDA.</div>;
+
   return (
-    <div className="min-h-screen bg-white flex flex-col font-sans">
+    <div className="min-h-screen bg-white flex flex-col font-sans text-slate-900 selection:bg-blue-100 selection:text-blue-900">
       
-      {/* 1. Hero Section (라운딩 수정) */}
-      <section className="relative w-full pt-32 pb-24 md:pt-48 md:pb-32 bg-[#F9FAFB] overflow-hidden">
-         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-100/40 rounded-full blur-[100px] translate-x-1/3 -translate-y-1/4 pointer-events-none"></div>
-         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-purple-100/40 rounded-full blur-[100px] -translate-x-1/3 translate-y-1/4 pointer-events-none"></div>
-
-        <div className="max-w-7xl mx-auto px-5 relative z-10 text-center">
-          <h1 className="text-4xl md:text-6xl font-black text-slate-900 leading-[1.1] tracking-tight mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            테니스의 모든 것,<br/>
-            오직 <span className="text-[#3182F6]">치다</span>에서만.
-          </h1>
-          <p className="text-lg md:text-xl text-slate-500 mb-10 font-medium animate-in fade-in slide-in-from-bottom-6 duration-700 delay-100">
-             전국 대회 정보부터 파트너 매칭까지, 테니스인을 위한 가장 확실한 선택
-          </p>
-          
-          {/* 검색바: rounded-full -> rounded-2xl */}
-          <div className="relative max-w-3xl mx-auto shadow-2xl shadow-blue-900/10 rounded-2xl animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
-            <input 
-              type="text" 
-              placeholder="찾으시는 대회나 지역을 입력해보세요" 
-              // rounded-full -> rounded-2xl
-              className="w-full pl-8 pr-16 py-5 md:py-6 rounded-2xl border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:ring-4 focus:ring-blue-100 focus:border-[#3182F6] transition-all outline-none text-lg font-medium"
-            />
-            {/* 버튼: rounded-full -> rounded-xl */}
-            <button className="absolute right-3 top-1/2 -translate-y-1/2 bg-[#3182F6] hover:bg-blue-600 text-white p-3 md:p-4 rounded-xl transition-colors">
-                <Search size={24} />
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* 2. Quick Menu (라운딩 수정) */}
-      <section className="relative w-full -mt-12 mb-20 z-20 px-5">
-        {/* rounded-3xl -> rounded-2xl */}
-        <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 p-4 md:p-8 flex justify-around items-center">
-            <QuickMenuIcon icon={<Trophy size={32} className="text-[#3182F6]"/>} label="대회 찾기" desc="전국 대회 일정" href="/tournaments" />
-            <div className="w-px h-12 bg-slate-100 hidden md:block"></div>
-               <QuickMenuIcon 
-                  icon={<Trophy size={32} className="text-purple-500"/>} 
-                  label="프로필 카드" // 변경
-                  desc="나만의 선수등록증" // 변경
-                  href="/my-card" // 경로 변경
-                  isReady={true} 
-               />
-            <div className="w-px h-12 bg-slate-100 hidden md:block"></div>
-            <QuickMenuIcon icon={<MapPin size={32} className="text-green-500"/>} label="코트 예약" desc="내 주변 빈 코트" href="#" isReady={false} />
-        </div>
-      </section>
-
-      {/* 3. Popular Tournaments */}
-      <section className="w-full max-w-7xl mx-auto px-5 mb-32">
-        <div className="flex items-end justify-between mb-8">
-          <div>
-             <span className="text-[#3182F6] font-bold tracking-wider text-sm md:text-base uppercase">Hot Tournaments</span>
-             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mt-1">🔥 지금 마감 임박한 대회</h2>
-          </div>
-          <Link href="/tournaments" className="hidden md:flex items-center gap-1 text-slate-500 hover:text-[#3182F6] font-medium transition-colors">
-            전체 대회 보기 <ArrowRight size={18} />
-          </Link>
-        </div>
-
-        {loading ? (
-          // rounded-3xl -> rounded-2xl
-          <div className="text-center py-20 text-slate-400 font-medium bg-slate-50 rounded-2xl">데이터를 불러오는 중...</div>
-        ) : (
-          <div className="flex md:grid md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-x-auto md:overflow-visible snap-x snap-mandatory no-scrollbar pb-4 px-[1px]">
-            {popularTournaments.map((t) => (
-              <div key={t.id} className="snap-center shrink-0 w-[85vw] md:w-auto first:pl-1 last:pr-1">
-                 {/* 참고: TournamentCard 내부 라운딩은 별도 파일에서 수정 필요 */}
-                 <TournamentCard data={t} isMainPage={true} />
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* 4. Storytelling 1 (라운딩 수정) */}
-      <section className="w-full bg-[#F9FAFB] py-24 md:py-32 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-5">
-           <div className="flex flex-col md:flex-row items-center gap-16 md:gap-24">
-              <div className="flex-1 text-center md:text-left z-10">
-                 <div className="flex items-center justify-center md:justify-start gap-2 mb-6">
-                    {/* rounded-full -> rounded-md */}
-                    <div className="inline-block px-4 py-1.5 rounded-md bg-blue-100 text-[#3182F6] font-bold text-sm">
-                       스마트 파트너 매칭
-                    </div>
-                    {/* rounded-md 유지 */}
-                    <span className="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-md border border-slate-200">
-                       3월 오픈 예정
-                    </span>
-                 </div>
-                 <h2 className="text-3xl md:text-5xl font-black text-slate-900 mb-6 leading-tight">
-                    아직도 단톡방에서<br/>
-                    <span className="text-slate-400">눈치보며 구하세요?</span>
-                 </h2>
-                 <p className="text-lg text-slate-600 leading-relaxed mb-8">
-                    내 구력과 스타일을 분석해 딱 맞는 파트너를 추천해드립니다.<br/>
-                    매너 점수부터 NTRP 레벨까지, 검증된 사람과 즐기세요.
-                 </p>
-                 
-                 {/* 버튼: rounded-xl 유지 */}
-                 <button 
-                    onClick={() => handleNotify('match')}
-                    disabled={notifyStatus.match}
-                    className={`px-8 py-4 rounded-xl font-bold text-base transition-all inline-flex items-center gap-2 shadow-lg
-                        ${notifyStatus.match 
-                            ? 'bg-green-500 text-white cursor-default' 
-                            : 'bg-white text-[#3182F6] hover:bg-blue-50 border border-blue-100'}`}
-                 >
-                    {notifyStatus.match ? (
-                        <>신청 완료! 오픈되면 알려드릴게요 <CheckCircle size={18}/></>
-                    ) : (
-                        <>오픈 알림 받기 <Bell size={18}/></>
-                    )}
-                 </button>
-              </div>
-              
-              <div className="flex-1 w-full max-w-md md:max-w-full relative">
-                 <div className="absolute top-0 right-0 w-64 h-64 bg-blue-400/20 rounded-full blur-[80px]"></div>
-                 {/* rounded-[3rem] -> rounded-3xl (조금 더 네모나게) */}
-                 <div className="relative aspect-square bg-white rounded-3xl shadow-2xl shadow-slate-200 p-8 flex items-center justify-center border border-slate-100 transform md:rotate-3 hover:rotate-0 transition-transform duration-500">
-                    <div className="w-full space-y-4">
-                        {/* 내부 요소 라운딩: rounded-2xl -> rounded-xl */}
-                        <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl">
-                           <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-2xl">🎾</div>
-                           <div>
-                              <div className="h-4 w-32 bg-slate-200 rounded-md mb-2"></div>
-                              <div className="h-3 w-20 bg-slate-100 rounded-md"></div>
-                           </div>
-                           <div className="ml-auto px-3 py-1 bg-blue-500 text-white text-xs rounded-md">매칭 성공</div>
-                        </div>
-                        <div className="flex items-center gap-4 p-4 bg-white border border-slate-100 rounded-xl shadow-sm">
-                           <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center text-2xl">🔥</div>
-                           <div>
-                              <div className="font-bold text-slate-900">김테니스</div>
-                              <div className="text-xs text-slate-500">NTRP 4.0 · 서울 송파구</div>
-                           </div>
-                           <div className="ml-auto text-blue-500 font-bold text-sm">98% 일치</div>
-                        </div>
-                    </div>
-                 </div>
-              </div>
-           </div>
-        </div>
-      </section>
-
-      {/* 5. Storytelling 2 (라운딩 수정) */}
-      <section className="w-full bg-white py-24 md:py-32">
-        <div className="max-w-7xl mx-auto px-5">
-           <div className="flex flex-col-reverse md:flex-row items-center gap-16 md:gap-24">
-              
-              <div className="flex-1 w-full max-w-md md:max-w-full">
-                 {/* rounded-[3rem] -> rounded-3xl */}
-                 <div className="bg-slate-50 rounded-3xl p-8 md:p-12 border border-slate-100 shadow-inner">
-                    <div className="space-y-6">
-                        <div className="flex items-end gap-3 h-32 md:h-48 justify-around px-4">
-                            {/* 그래프 상단: rounded-t-xl -> rounded-t-lg */}
-                            <div className="w-12 bg-blue-100 rounded-t-lg h-[40%]"></div>
-                            <div className="w-12 bg-blue-200 rounded-t-lg h-[60%]"></div>
-                            <div className="w-12 bg-blue-300 rounded-t-lg h-[50%]"></div>
-                            <div className="w-12 bg-[#3182F6] rounded-t-lg h-[80%] relative">
-                                <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded-md">Best</div>
-                            </div>
-                            <div className="w-12 bg-blue-400 rounded-t-lg h-[70%]"></div>
-                        </div>
-                        <div className="flex justify-between text-slate-400 text-sm font-bold pt-4 border-t border-slate-200">
-                            <span>Jan</span><span>May</span><span>Dec</span>
-                        </div>
-                    </div>
-                 </div>
-              </div>
-
-              <div className="flex-1 text-center md:text-left">
-                 {/* rounded-full -> rounded-md */}
-                 <div className="inline-block px-4 py-1.5 rounded-md bg-purple-100 text-purple-600 font-bold text-sm mb-6">
-                    나만의 커리어 관리
-                 </div>
-                 <h2 className="text-3xl md:text-5xl font-black text-slate-900 mb-6 leading-tight">
-                    우승 트로피,<br/>
-                    <span className="text-slate-400">사진첩에만 두실 건가요?</span>
-                 </h2>
-                 <p className="text-lg text-slate-600 leading-relaxed mb-8">
-                    흩어져 있는 나의 대회 참가 기록과 수상 내역.<br/>
-                    치다에서는 당신의 모든 땀방울이 '공식 커리어'가 됩니다.
-                 </p>
-                 <div className="flex flex-col gap-4">
-                    {/* FeatureItem 라운딩 수정됨 */}
-                    <FeatureItem icon={<TrendingUp className="text-red-500"/>} text="대회 성적 자동 그래프 분석" />
-                    <FeatureItem icon={<Trophy className="text-yellow-500"/>} text="디지털 트로피 진열장 (준비중)" />
-                 </div>
-              </div>
-
-           </div>
-        </div>
-      </section>
-
-      {/* 6. Storytelling 3 (라운딩 수정) */}
-      <section className="w-full bg-[#F9FAFB] py-24 md:py-32">
-        <div className="max-w-7xl mx-auto px-5 text-center">
-            <h2 className="text-3xl md:text-5xl font-black text-slate-900 mb-6 leading-tight">
-                낚시성 대회 정보에<br className="md:hidden"/> <span className="text-[#3182F6]">지치셨나요?</span>
-            </h2>
-            <p className="text-lg text-slate-600 leading-relaxed mb-12 max-w-2xl mx-auto">
-                카페, 밴드, 단톡방... <br className="md:hidden"/>여기저기 흩어진 정보 찾느라 고생하지 마세요.<br/>
-                치다는 <b>실제 개최되는 검증된 대회 정보</b>만 큐레이션하여 제공합니다.
-            </p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-                {/* TrustItem 라운딩 수정됨 */}
-                <TrustItem title="실시간 업데이트" desc="취소/변경된 일정 즉시 반영" icon={<Zap size={32} className="text-[#3182F6]"/>} />
-                <TrustItem title="검증된 주최자" desc="믿을 수 있는 단체의 대회만" icon={<ShieldCheck size={32} className="text-green-500"/>} />
-                <TrustItem title="투명한 요강" desc="참가비, 상품 정보 100% 공개" icon={<MessageCircle size={32} className="text-purple-500"/>} />
-            </div>
-        </div>
-      </section>
-
-
-      {/* 7. Premium Banner (라운딩 수정) */}
-      <section className="w-full bg-[#111] py-24 md:py-32 relative overflow-hidden">
-         <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-blue-600/20 rounded-full blur-[120px] translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
-         <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-purple-600/20 rounded-full blur-[100px] -translate-x-1/3 translate-y-1/3 pointer-events-none"></div>
-
-         <div className="max-w-7xl mx-auto px-5 relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
-            <div className="text-center md:text-left max-w-2xl">
-                {/* rounded-full -> rounded-md */}
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-white/10 border border-white/10 text-blue-300 text-xs font-bold mb-4">
-                    <Star size={12} fill="currentColor"/> Premium Service
-                </div>
-                <h2 className="text-3xl md:text-5xl font-bold text-white mb-6 leading-tight">
-                    우승을 위한<br/>
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">가장 완벽한 파트너</span>
-                </h2>
-                <p className="text-slate-400 text-lg mb-8 leading-relaxed">
-                    검증된 파트너 매칭부터 우승 상금 관리, <br className="hidden md:block"/>
-                    전문 코치의 피드백까지 한 번에 경험하세요.
-                </p>
-                {/* 버튼: rounded-xl 유지 */}
-                <button 
-                    onClick={() => handleNotify('premium')}
-                    disabled={notifyStatus.premium}
-                    className={`px-8 py-4 rounded-xl font-bold text-base transition-all inline-flex items-center gap-2
-                        ${notifyStatus.premium 
-                            ? 'bg-green-600 text-white cursor-default' 
-                            : 'bg-white text-slate-900 hover:bg-slate-200'}`}
-                >
-                    {notifyStatus.premium ? '알림 신청 완료!' : '멤버십 오픈 알림 받기'} <ArrowRight size={18}/>
-                </button>
-            </div>
-            <div className="relative">
-                 <div className="w-64 h-64 md:w-80 md:h-80 bg-gradient-to-br from-white/5 to-white/0 rounded-full border border-white/10 backdrop-blur-md flex items-center justify-center relative shadow-2xl animate-pulse-slow">
-                     <Trophy size={120} className="text-yellow-400 drop-shadow-[0_0_30px_rgba(250,204,21,0.4)]" strokeWidth={1} />
-                 </div>
-            </div>
-         </div>
-      </section>
-
-{/* =========================================
-          [최종_블랙에디션] 8. Bottom CTA (Chic Black)
-          - 배경: 완전 검은색 (bg-black) + 은은한 오로라 한 방울
-          - 높이: py-48 -> py-24 (절반으로 축소, 컴팩트함)
-          - 버튼: 검은 배경에 흰색 버튼으로 대비 극대화
+      {/* =========================================
+          1. Hero Section (Ultra Detail)
+          - 그라데이션 텍스트, 플로팅 애니메이션 강화
       ========================================= */}
-      <section className="w-full py-24 bg-black relative overflow-hidden">
-         
-         {/* 배경 데코레이션 (너무 밋밋하지 않게 중앙에 은은한 파란 빛 한 방울) */}
-         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue-900/20 rounded-full blur-[100px] pointer-events-none"></div>
+      <section className="w-full bg-[#F8FAFC] pt-48 pb-32 relative overflow-hidden border-b border-slate-200">
+        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-blue-400/10 rounded-full blur-[120px] translate-x-1/3 -translate-y-1/3 pointer-events-none animate-pulse-slow"></div>
+        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-purple-400/10 rounded-full blur-[100px] -translate-x-1/3 translate-y-1/3 pointer-events-none"></div>
 
-         <div className="max-w-4xl mx-auto px-5 relative z-10 text-center">
-            <h2 className="text-3xl md:text-5xl font-black text-white mb-6 leading-tight tracking-tight">
-               지금 바로 코트로<br className="md:hidden"/> 나갈 준비 되셨나요?
-            </h2>
-            <p className="text-slate-400 text-lg font-medium mb-10">
-               고민하는 순간 마감됩니다. 3초 만에 시작해보세요.
-            </p>
-            
-            {/* 버튼: 흰색 배경 + 검은 글씨 (가장 눈에 띔) */}
-            <Link href="/login" className="inline-flex items-center gap-2 px-8 py-4 bg-white text-black hover:bg-slate-200 rounded-xl font-bold text-xl transition-all hover:-translate-y-1">
-               치다 시작하기 <ArrowRight size={20}/>
-            </Link>
+        <div className="max-w-7xl mx-auto px-5 relative z-10">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-16">
+                
+                {/* 텍스트 영역 */}
+                <div className="max-w-3xl animate-in fade-in slide-in-from-bottom-8 duration-1000">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm border border-blue-100 rounded-full shadow-sm mb-8 hover:shadow-md transition-all cursor-default">
+                        <span className="relative flex h-2.5 w-2.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
+                        </span>
+                        <span className="text-sm font-bold text-slate-600">
+                            현재 <span className="text-blue-600 tabular-nums">128</span>개의 대회가 모집 중
+                        </span>
+                    </div>
+
+                    <h1 className="text-5xl md:text-7xl font-black text-slate-900 leading-[1.1] mb-8 tracking-tight">
+                        테니스의 모든 순간,<br/>
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#3182F6] to-[#8B5CF6]">치다</span>에서 시작하세요.
+                    </h1>
+                    <p className="text-slate-500 text-xl font-medium leading-relaxed mb-12 max-w-2xl">
+                        전국 대회 정보 검색부터 스마트한 파트너 매칭까지.<br/>
+                        더 이상 단톡방을 헤매지 마세요. <b>검증된 정보</b>만 모았습니다.
+                    </p>
+
+                    {/* 대형 검색바 (글래스모피즘 + 포커스링) */}
+                    <div className="relative max-w-xl shadow-2xl shadow-blue-900/5 rounded-[2rem] group transition-all hover:-translate-y-1">
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-[2rem] opacity-0 group-hover:opacity-100 blur transition-opacity duration-500 -z-10"></div>
+                        <input 
+                            type="text" 
+                            placeholder="지역, 대회명, 클럽으로 검색..." 
+                            className="w-full h-20 pl-16 pr-20 bg-white border-2 border-transparent rounded-[2rem] focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 font-bold text-xl text-slate-800 transition-all placeholder:text-slate-300"
+                        />
+                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-hover:text-blue-500 transition-colors" size={28}/>
+                        <button className="absolute right-3 top-1/2 -translate-y-1/2 bg-slate-900 hover:bg-blue-600 text-white w-14 h-14 rounded-2xl flex items-center justify-center transition-all shadow-lg hover:shadow-blue-500/30">
+                            <ArrowRight size={24} />
+                        </button>
+                    </div>
+                </div>
+
+                {/* 우측 비주얼 (플로팅 애니메이션) */}
+                <div className="hidden md:block relative w-[450px] h-[500px] animate-in fade-in slide-in-from-right-12 duration-1000 delay-200">
+                     {/* 뒷배경 카드 */}
+                     <div className="absolute right-0 top-10 w-80 h-96 bg-gradient-to-br from-white to-slate-50 rounded-[2.5rem] border border-white shadow-2xl rotate-6 animate-float-slow"></div>
+                     {/* 메인 카드 */}
+                     <div className="absolute right-10 top-0 w-80 h-96 bg-white/90 backdrop-blur-xl rounded-[2.5rem] shadow-[0_30px_60px_rgba(0,0,0,0.12)] border border-white p-8 flex flex-col justify-between hover:scale-[1.02] transition-transform duration-500 animate-float">
+                        <div className="flex justify-between items-start">
+                            <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-3xl shadow-inner">🏆</div>
+                            <div className="px-3 py-1 bg-red-50 text-red-500 text-xs font-bold rounded-full border border-red-100 flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span> 마감임박
+                            </div>
+                        </div>
+                        <div>
+                            <p className="text-slate-400 font-bold text-sm mb-1 uppercase tracking-wider">Weekly Best</p>
+                            <h3 className="text-3xl font-black text-slate-900 leading-none">제1회<br/>치다 오픈</h3>
+                        </div>
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between text-sm font-bold text-slate-500">
+                                <span>참가 현황</span>
+                                <span className="text-blue-600">98%</span>
+                            </div>
+                            <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                                <div className="w-[98%] h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
+                            </div>
+                        </div>
+                     </div>
+                </div>
+            </div>
+        </div>
+      </section>
+
+
+      {/* =========================================
+          2. Curation Section (호버 인터랙션 강화)
+      ========================================= */}
+      <section className="w-full bg-white py-24 border-b border-slate-50">
+        <div className="max-w-7xl mx-auto px-5">
+            <div className="flex items-end justify-between mb-12">
+                <div>
+                    <div className="flex items-center gap-2 mb-3">
+                        <TrendingUp className="text-rose-500" size={24}/>
+                        <span className="text-rose-500 font-black text-sm tracking-widest uppercase">Closing Soon</span>
+                    </div>
+                    <h2 className="text-3xl md:text-4xl font-black text-slate-900">
+                        놓치면 후회할 <span className="relative inline-block z-0"><span className="absolute bottom-2 left-0 w-full h-4 bg-rose-100 -z-10"></span>마감 임박 대회</span>
+                    </h2>
+                </div>
+                <Link href="/tournaments" className="hidden md:flex items-center gap-2 text-base font-bold text-slate-400 hover:text-slate-900 transition-colors group">
+                    전체보기 <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform"/>
+                </Link>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                {closingSoon.length > 0 ? (
+                    closingSoon.map((t) => (
+                        <div key={t.id} className="h-full">
+                            <TournamentCard tournament={t} />
+                        </div>
+                    ))
+                ) : (
+                    <div className="col-span-4 py-24 text-center bg-slate-50 rounded-[2.5rem] border border-dashed border-slate-200">
+                        <Trophy className="mx-auto text-slate-300 mb-4" size={48}/>
+                        <p className="font-bold text-slate-500 text-lg">현재 마감 임박한 대회가 없습니다.</p>
+                        <p className="text-slate-400 text-sm mt-1">하지만 곧 새로운 대회가 열릴 거예요!</p>
+                    </div>
+                )}
+            </div>
+        </div>
+      </section>
+
+
+      {/* =========================================
+          3. Trust Section (숫자 카운팅 애니메이션)
+          - useCounter 훅 사용
+      ========================================= */}
+      <section className="w-full bg-[#0F172A] py-24 text-white relative overflow-hidden">
+        {/* 배경 효과 */}
+        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[100px] pointer-events-none"></div>
+
+        <div className="max-w-7xl mx-auto px-5 relative z-10">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-12 text-center divide-x divide-white/10">
+                <TrustItem end={128} label="진행 중인 대회" suffix="+" />
+                <TrustItem end={15200} label="월간 방문자 수" separator />
+                <TrustItem end={8240} label="누적 참가자" separator />
+                <TrustItem end={98} label="대회 만족도" suffix="%" />
+            </div>
+        </div>
+      </section>
+
+
+      {/* =========================================
+          4. Main List Section (Pill Filter)
+      ========================================= */}
+      <section className="w-full bg-[#F8FAFC] py-24">
+        <div className="max-w-7xl mx-auto px-5">
+            <div className="flex flex-col md:flex-row items-start md:items-end justify-between mb-12 gap-6">
+                <div>
+                    <h2 className="text-3xl font-black text-slate-900 mb-4 tracking-tight">
+                        나에게 맞는 대회를 찾아보세요
+                    </h2>
+                    <p className="text-slate-500 font-medium">
+                        지역별, 레벨별로 원하는 대회를 필터링할 수 있습니다.
+                    </p>
+                </div>
+                
+                {/* 퀵 필터 */}
+                <div className="flex items-center gap-2 overflow-x-auto pb-4 md:pb-0 w-full md:w-auto no-scrollbar">
+                    {['전체', '서울', '경기', '테린이', '오픈부'].map((tab) => (
+                        <button 
+                            key={tab}
+                            onClick={() => setFilter(tab)}
+                            className={`px-6 py-3 rounded-full text-sm font-bold whitespace-nowrap transition-all border shadow-sm active:scale-95 ${
+                                filter === tab 
+                                ? 'bg-slate-900 text-white border-slate-900 shadow-slate-200' 
+                                : 'bg-white text-slate-500 border-slate-200 hover:bg-white hover:border-blue-300 hover:text-blue-600 hover:shadow-md'
+                            }`}
+                        >
+                            {tab}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-20">
+                {filteredList.length > 0 ? (
+                    filteredList.map((t) => (
+                        <div key={t.id}>
+                            <TournamentCard tournament={t} />
+                        </div>
+                    ))
+                ) : (
+                    <div className="col-span-4 py-32 text-center">
+                        <div className="inline-block p-4 rounded-full bg-slate-100 mb-4"><Search size={32} className="text-slate-400"/></div>
+                        <p className="text-slate-900 font-bold text-lg">조건에 맞는 대회가 없습니다.</p>
+                        <p className="text-slate-500 mt-2">다른 필터를 선택해보세요.</p>
+                    </div>
+                )}
+            </div>
+
+            <div className="text-center">
+                 <Link href="/tournaments" className="group inline-flex items-center gap-2 px-12 py-5 bg-white border border-slate-200 rounded-2xl font-bold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm text-lg hover:-translate-y-1">
+                    모든 대회 보러가기 <ArrowRight size={20} className="text-slate-400 group-hover:text-slate-900 transition-colors"/>
+                 </Link>
+            </div>
+        </div>
+      </section>
+
+
+      {/* =========================================
+          5. Insights Section (Interactive Cards)
+      ========================================= */}
+      <section className="w-full bg-white py-32 border-t border-slate-100">
+         <div className="max-w-7xl mx-auto px-5">
+            <div className="mb-16">
+                <span className="text-blue-600 font-bold text-sm tracking-widest uppercase mb-3 block">Career Insights</span>
+                <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight">
+                    우승자들의<br/>
+                    <span className="text-slate-400">생생한 노하우를 들어보세요</span>
+                </h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <InsightCard 
+                    category="우승 인터뷰"
+                    title="구력 1년차 테린이가 신인부 우승한 비결"
+                    desc="매일 벽치기 30분이 만든 기적같은 스토리. 라켓 잡는 법부터 멘탈 관리까지."
+                    color="from-blue-100 to-indigo-50"
+                    icon="🏆"
+                />
+                <InsightCard 
+                    category="대회 꿀팁"
+                    title="첫 대회 나가기 전, 가방에 뭘 챙겨야 할까?"
+                    desc="고수들이 말하는 필수 준비물 체크리스트 10. 이것만 챙기면 당황하지 않아요."
+                    color="from-rose-100 to-orange-50"
+                    icon="🎒"
+                />
+                <InsightCard 
+                    category="파트너 구하기"
+                    title="나와 딱 맞는 복식 파트너 알아보는 법"
+                    desc="성격 유형(MBTI)으로 보는 테니스 파트너 궁합. 싸우지 않고 오래가는 법."
+                    color="from-purple-100 to-pink-50"
+                    icon="🤝"
+                />
+            </div>
          </div>
       </section>
 
-      {/* Footer */}
-      <Footer />
+
+      {/* =========================================
+          6. Banner Section (Impact CTA)
+      ========================================= */}
+      <section className="w-full bg-[#111] py-32 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-blue-600/20 rounded-full blur-[120px] translate-x-1/2 -translate-y-1/2 pointer-events-none animate-pulse-slow"></div>
+        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-purple-600/20 rounded-full blur-[100px] -translate-x-1/3 translate-y-1/3 pointer-events-none"></div>
+        
+        <div className="max-w-4xl mx-auto px-5 relative z-10 text-center">
+            <h2 className="text-4xl md:text-6xl font-black text-white mb-8 leading-tight tracking-tight">
+                지금 바로 코트로<br/>나갈 준비 되셨나요?
+            </h2>
+            <p className="text-slate-400 text-xl font-medium mb-12">
+                10만 테니스인과 함께하는 국내 최대 플랫폼.<br/>
+                고민하는 순간 마감됩니다. 3초 만에 시작하세요.
+            </p>
+            <div className="flex flex-col md:flex-row gap-4 justify-center">
+                <Link href="/tournaments" className="inline-flex items-center justify-center gap-2 px-10 py-5 bg-white text-black hover:bg-slate-200 rounded-2xl font-bold text-xl transition-all hover:-translate-y-1 shadow-[0_0_30px_rgba(255,255,255,0.3)]">
+                    대회 찾아보기 <ArrowRight size={20}/>
+                </Link>
+                <Link href="/admin/write" className="inline-flex items-center justify-center gap-2 px-10 py-5 bg-transparent border border-white/20 text-white hover:bg-white/10 rounded-2xl font-bold text-xl transition-all">
+                    주최자 등록하기
+                </Link>
+            </div>
+        </div>
+      </section>
+
+
+      {/* =========================================
+          ✅ 7. Footer (Perfect Match)
+      ========================================= */}
+      <footer className="bg-white border-t border-slate-200 py-20">
+        <div className="max-w-7xl mx-auto px-5">
+            <div className="flex flex-col md:flex-row justify-between items-start gap-12">
+                
+                {/* 회사 정보 */}
+                <div className="space-y-6 max-w-sm">
+                    <p className="text-slate-900 font-black text-2xl tracking-tighter">CHIDA.</p>
+                    <div className="text-sm text-slate-500 font-medium leading-loose">
+                        <p>© 2026 Chida Corp.</p>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                            <span>주식회사 치다</span>
+                            <span className="text-slate-300">|</span>
+                            <span>대표: 박영승</span>
+                        </div>
+                        <p>사업자등록번호: 000-00-00000</p>
+                        <p className="mt-4 text-slate-400">
+                            치다는 통신판매중개자이며, 통신판매의 당사자가 아닙니다. 
+                            대회 정보, 환불 등과 관련한 의무와 책임은 각 판매자에게 있습니다.
+                        </p>
+                    </div>
+                </div>
+
+                {/* 메뉴 링크 */}
+                <div className="flex gap-16">
+                    <div>
+                        <h4 className="font-bold text-slate-900 mb-4">서비스</h4>
+                        <ul className="space-y-3 text-sm text-slate-500 font-medium">
+                            <li><Link href="/tournaments" className="hover:text-blue-600 transition-colors">대회 찾기</Link></li>
+                            <li><Link href="#" className="hover:text-blue-600 transition-colors">코트 예약</Link></li>
+                            <li><Link href="#" className="hover:text-blue-600 transition-colors">파트너 매칭</Link></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 className="font-bold text-slate-900 mb-4">고객지원</h4>
+                        <ul className="space-y-3 text-sm text-slate-500 font-medium">
+                            <li><Link href="#" className="hover:text-blue-600 transition-colors">공지사항</Link></li>
+                            <li><Link href="#" className="hover:text-blue-600 transition-colors">자주 묻는 질문</Link></li>
+                            <li><Link href="/admin/write" className="hover:text-blue-600 transition-colors">주최자 센터</Link></li>
+                        </ul>
+                    </div>
+                </div>
+
+                {/* 소셜 */}
+                <div className="flex gap-3">
+                    <SocialIcon href="#" icon={<Instagram size={20} />} />
+                    <SocialIcon href="#" icon={<Youtube size={20} />} />
+                    <SocialIcon href="#" icon={<Facebook size={20} />} />
+                </div>
+            </div>
+        </div>
+      </footer>
     </div>
   );
 }
 
-// 퀵 메뉴 컴포넌트 (라운딩 수정)
-function QuickMenuIcon({ icon, label, desc, href, isReady = true }: { icon: React.ReactNode, label: string, desc: string, href: string, isReady?: boolean }) {
-    const Content = () => (
-        // rounded-2xl -> rounded-xl
-        <div className={`flex flex-col md:flex-row items-center gap-4 p-2 md:p-4 rounded-xl transition-all ${isReady ? 'hover:bg-slate-50 cursor-pointer group' : 'opacity-50 grayscale cursor-not-allowed'}`}>
-            {/* rounded-2xl -> rounded-xl */}
-            <div className="p-3 md:p-4 bg-slate-50 rounded-xl group-hover:bg-white group-hover:shadow-md transition-all">
-                {icon}
-            </div>
-            <div className="text-center md:text-left">
-                <div className="font-bold text-slate-900 text-sm md:text-lg mb-0.5">{label}</div>
-                <div className="text-xs md:text-sm text-slate-400 font-medium hidden md:block">{desc}</div>
-                {/* rounded-full -> rounded-md */}
-                {!isReady && <span className="md:hidden text-[10px] text-white bg-slate-400 px-2 py-0.5 rounded-md mt-1 inline-block">준비중</span>}
-            </div>
-        </div>
-    );
-    if (isReady) return <Link href={href} className="flex-1"><Content /></Link>;
-    return <div className="flex-1"><Content /></div>;
+// --------------------------------------------------------
+// 👇 Sub Components (Micro-interactions)
+// --------------------------------------------------------
+
+// ✨ 숫자 카운팅 훅 (직접 구현)
+function useCounter(end: number, duration: number = 2000) {
+    const [count, setCount] = useState(0);
+    const countRef = useRef<HTMLSpanElement>(null);
+    
+    useEffect(() => {
+        let startTime: number | null = null;
+        let animationFrameId: number;
+
+        const animate = (timestamp: number) => {
+            if (!startTime) startTime = timestamp;
+            const progress = timestamp - startTime;
+            const percentage = Math.min(progress / duration, 1);
+            
+            // Ease-out effect
+            const easeOut = 1 - Math.pow(1 - percentage, 3);
+            
+            setCount(Math.floor(end * easeOut));
+
+            if (progress < duration) {
+                animationFrameId = requestAnimationFrame(animate);
+            }
+        };
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting) {
+                    animationFrameId = requestAnimationFrame(animate);
+                    observer.disconnect();
+                }
+            },
+            { threshold: 0.5 }
+        );
+
+        if (countRef.current) {
+            observer.observe(countRef.current);
+        }
+
+        return () => {
+            cancelAnimationFrame(animationFrameId);
+            observer.disconnect();
+        };
+    }, [end, duration]);
+
+    return { count, countRef };
 }
 
-// 특징 리스트 아이템 (라운딩 수정)
-function FeatureItem({ icon, text }: { icon: React.ReactNode, text: string }) {
-   return (
-      // rounded-xl -> rounded-lg
-      <div className="flex items-center gap-3 p-4 bg-white rounded-lg border border-slate-100 shadow-sm w-full md:w-auto">
-         {icon}
-         <span className="font-bold text-slate-700">{text}</span>
-      </div>
-   )
-}
-
-// 신뢰성 아이템 (라운딩 수정)
-function TrustItem({ icon, title, desc }: { icon: React.ReactNode, title: string, desc: string }) {
+// ✨ 신뢰도 아이템 (카운팅 적용)
+function TrustItem({ end, label, isLast, suffix = "", separator = false }: any) {
+    const { count, countRef } = useCounter(end);
+    const containerRef = useRef<HTMLDivElement>(null);
+    
+    useEffect(() => {
+        if (containerRef.current && countRef.current) {
+            const observer = new IntersectionObserver(
+                (entries) => {
+                    if (entries[0].isIntersecting) {
+                        observer.disconnect();
+                    }
+                },
+                { threshold: 0.5 }
+            );
+            observer.observe(containerRef.current);
+        }
+    }, []);
+    
     return (
-        // rounded-2xl -> rounded-xl
-        <div className="p-6 bg-white rounded-xl border border-slate-100 shadow-sm flex flex-col items-center hover:-translate-y-1 transition-transform duration-300">
-            {/* rounded-full -> rounded-xl */}
-            <div className="mb-4 p-3 bg-slate-50 rounded-xl">{icon}</div>
-            <h3 className="font-bold text-slate-900 text-lg mb-2">{title}</h3>
-            <p className="text-slate-500 text-sm">{desc}</p>
+        <div className={`flex flex-col items-center ${!isLast ? 'border-r border-white/10' : ''}`} ref={containerRef}>
+            <span className="text-4xl md:text-6xl font-black mb-3 tabular-nums tracking-tight" ref={countRef}>
+                {separator ? count.toLocaleString() : count}{suffix}
+            </span>
+            <span className="text-slate-400 font-bold text-sm tracking-wide uppercase">{label}</span>
         </div>
+    )
+}
+
+// ✨ 인사이트 카드 (호버 줌 & 플레이 버튼 효과)
+function InsightCard({ category, title, desc, color, icon }: any) {
+    return (
+        <div className="group cursor-pointer">
+            <div className={`relative aspect-video rounded-3xl bg-gradient-to-br ${color} mb-6 overflow-hidden flex items-center justify-center shadow-inner`}>
+                <div className="text-7xl group-hover:scale-110 transition-transform duration-500 drop-shadow-sm transform group-hover:rotate-3">{icon}</div>
+                {/* Play Button Overlay */}
+                <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-[2px]">
+                    <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-xl transform scale-50 group-hover:scale-100 transition-transform duration-300">
+                        <PlayCircle className="text-slate-900 ml-1" size={32} fill="currentColor" />
+                    </div>
+                </div>
+            </div>
+            <div className="px-2">
+                <span className="text-blue-600 font-bold text-xs mb-2 block tracking-wider uppercase">{category}</span>
+                <h3 className="text-xl font-bold text-slate-900 mb-3 leading-snug group-hover:text-blue-600 transition-colors">
+                    {title}
+                </h3>
+                <p className="text-slate-500 text-sm line-clamp-2 leading-relaxed font-medium">
+                    {desc}
+                </p>
+            </div>
+        </div>
+    )
+}
+
+function SocialIcon({ href, icon }: { href: string, icon: React.ReactNode }) {
+    return (
+        <a href={href} className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-900 transition-all hover:scale-110">
+            {icon}
+        </a>
     )
 }

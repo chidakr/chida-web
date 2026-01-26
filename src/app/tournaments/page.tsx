@@ -7,7 +7,7 @@ import {
   Search, MapPin, Calendar, Filter, ChevronDown, Check, RefreshCw, Square, CheckSquare, 
   Facebook, Youtube, Instagram // ✅ 소셜 아이콘 추가
 } from 'lucide-react';
-import TournamentCard from '@/src/components/layout/tournaments/TournamentCard';
+import TournamentCard from './TournamentCard';
 
 export default function TournamentsPage() {
   return (
@@ -247,7 +247,7 @@ function TournamentListContent() {
            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
              {tournaments.length > 0 ? (
                tournaments.map((t) => (
-                 <TournamentCard key={t.id} data={t} />
+                 <TournamentCard key={t.id} tournament={t} />
                ))
              ) : (
                 <div className="col-span-full py-20 text-center">
