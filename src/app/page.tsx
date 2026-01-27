@@ -318,56 +318,35 @@ export default function HomePage() {
 
 
       {/* =========================================
-          ✅ 7. Footer (Perfect Match)
+          ✅ Footer (Simple & Clean)
       ========================================= */}
-      <footer className="bg-white border-t border-slate-200 py-20">
+      <footer className="bg-white pb-20 mt-auto border-t border-slate-200">
         <div className="max-w-7xl mx-auto px-5">
-            <div className="flex flex-col md:flex-row justify-between items-start gap-12">
+            
+            {/* 구분선 (border-t를 위로 이동시킴) */}
+            <div className="pt-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
                 
-                {/* 회사 정보 */}
-                <div className="space-y-6 max-w-sm">
-                    <p className="text-slate-900 font-black text-2xl tracking-tighter">CHIDA.</p>
-                    <div className="text-sm text-slate-500 font-medium leading-loose">
-                        <p>© 2026 Chida Corp.</p>
-                        <div className="flex flex-wrap gap-2 mt-2">
+                {/* 왼쪽: 회사 정보 */}
+                <div className="text-left space-y-2">
+                    <p className="text-[#65676A] font-medium text-base">© 2026 Chida Corp.</p>
+                    
+                    <div className="flex flex-col gap-1 text-base text-[#A7A7AA] font-normal">
+                        <div className="flex flex-wrap items-center gap-2">
                             <span>주식회사 치다</span>
-                            <span className="text-slate-300">|</span>
-                            <span>대표: 박영승</span>
+                            <span className="w-px h-3 bg-slate-300 hidden sm:block"></span>
+                            <span>대표자 : 박영승</span>
                         </div>
-                        <p>사업자등록번호: 000-00-00000</p>
-                        <p className="mt-4 text-slate-400">
-                            치다는 통신판매중개자이며, 통신판매의 당사자가 아닙니다. 
-                            대회 정보, 환불 등과 관련한 의무와 책임은 각 판매자에게 있습니다.
-                        </p>
+                        <p>사업자등록번호 : 000-00-00000</p>
                     </div>
                 </div>
 
-                {/* 메뉴 링크 */}
-                <div className="flex gap-16">
-                    <div>
-                        <h4 className="font-bold text-slate-900 mb-4">서비스</h4>
-                        <ul className="space-y-3 text-sm text-slate-500 font-medium">
-                            <li><Link href="/tournaments" className="hover:text-blue-600 transition-colors">대회 찾기</Link></li>
-                            <li><Link href="#" className="hover:text-blue-600 transition-colors">코트 예약</Link></li>
-                            <li><Link href="#" className="hover:text-blue-600 transition-colors">파트너 매칭</Link></li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h4 className="font-bold text-slate-900 mb-4">고객지원</h4>
-                        <ul className="space-y-3 text-sm text-slate-500 font-medium">
-                            <li><Link href="#" className="hover:text-blue-600 transition-colors">공지사항</Link></li>
-                            <li><Link href="#" className="hover:text-blue-600 transition-colors">자주 묻는 질문</Link></li>
-                            <li><Link href="/admin/write" className="hover:text-blue-600 transition-colors">주최자 센터</Link></li>
-                        </ul>
-                    </div>
-                </div>
-
-                {/* 소셜 */}
+                {/* 오른쪽: 소셜 아이콘 */}
                 <div className="flex gap-3">
-                    <SocialIcon href="#" icon={<Instagram size={20} />} />
-                    <SocialIcon href="#" icon={<Youtube size={20} />} />
-                    <SocialIcon href="#" icon={<Facebook size={20} />} />
+                    <SocialIcon href="https://facebook.com" icon={<Facebook size={20} />} />
+                    <SocialIcon href="https://youtube.com" icon={<Youtube size={20} />} />
+                    <SocialIcon href="https://instagram.com" icon={<Instagram size={20} />} />
                 </div>
+
             </div>
         </div>
       </footer>
@@ -504,7 +483,12 @@ function InsightCard({
 
 function SocialIcon({ href, icon }: { href: string, icon: React.ReactNode }) {
     return (
-        <a href={href} className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-900 transition-all hover:scale-110">
+        <a 
+            href={href} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-[#A7A7AA] hover:bg-slate-200 hover:text-slate-600 transition-colors"
+        >
             {icon}
         </a>
     )
