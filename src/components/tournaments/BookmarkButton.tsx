@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { Bookmark } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface BookmarkButtonProps {
   tournamentId: string;
@@ -36,7 +37,7 @@ export default function BookmarkButton({ tournamentId, variant = 'default' }: Bo
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      alert('로그인이 필요한 기능입니다 🔒');
+      toast.error('로그인이 필요한 기능입니다 🔒');
       setLoading(false);
       return;
     }
@@ -48,11 +49,13 @@ export default function BookmarkButton({ tournamentId, variant = 'default' }: Bo
         .eq('user_id', user.id)
         .eq('tournament_id', tournamentId);
       setIsBookmarked(false);
+      toast.success('북마크가 해제되었습니다');
     } else {
       await supabase
         .from('bookmarks')
         .insert({ user_id: user.id, tournament_id: tournamentId });
       setIsBookmarked(true);
+      toast.success('북마크에 저장되었습니다 ⭐');
     }
     setLoading(false);
   };

@@ -2,6 +2,7 @@
 
 import { createClient } from '@/utils/supabase/client';
 import { MessageCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function KakaoLoginBtn() {
   const supabase = createClient();
@@ -20,7 +21,7 @@ export default function KakaoLoginBtn() {
 
     if (error) {
       console.error('Login error:', error);
-      alert('로그인 연결 실패! 다시 시도해주세요.');
+      toast.error('로그인 연결 실패! 다시 시도해주세요.');
     }
   };
 

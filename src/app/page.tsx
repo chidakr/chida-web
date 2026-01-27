@@ -8,12 +8,13 @@ import { TournamentCard } from '@/components/tournaments';
 import type { Tournament } from '@/types';
 import {
   Search, ChevronRight, TrendingUp, ArrowRight,
-  Facebook, Youtube, Instagram, Trophy, PlayCircle,
+  Facebook, Youtube, Instagram, Trophy, PlayCircle, X,
 } from 'lucide-react';
 
 export default function HomePage() {
   const { data: tournaments, loading } = useTournamentsSimple();
   const [filter, setFilter] = useState('전체');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const closingSoon = tournaments
     .filter((t: Tournament) => t.status === 'recruiting')
@@ -21,6 +22,15 @@ export default function HomePage() {
     .slice(0, 4);
 
   const filteredList = tournaments.filter((t: Tournament) => {
+      // 1. 검색어 필터링 (제목, 장소)
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesTitle = t.title?.toLowerCase().includes(query);
+        const matchesLocation = t.location?.toLowerCase().includes(query);
+        if (!matchesTitle && !matchesLocation) return false;
+      }
+      
+      // 2. 카테고리 필터링
       if (filter === '전체') return true;
       if (filter === '마감임박') return t.status === 'recruiting'; 
       if (filter === '서울') return t.location.includes('서울');
@@ -72,10 +82,20 @@ export default function HomePage() {
                         <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-[2rem] opacity-0 group-hover:opacity-100 blur transition-opacity duration-500 -z-10"></div>
                         <input 
                             type="text" 
-                            placeholder="지역, 대회명, 클럽으로 검색..." 
+                            placeholder="지역, 대회명으로 검색..." 
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full h-20 pl-16 pr-20 bg-white border-2 border-transparent rounded-[2rem] focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 font-bold text-xl text-slate-800 transition-all placeholder:text-slate-300"
                         />
                         <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-hover:text-blue-500 transition-colors" size={28}/>
+                        {searchQuery && (
+                          <button 
+                            onClick={() => setSearchQuery('')}
+                            className="absolute right-20 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                          >
+                            <X size={24} />
+                          </button>
+                        )}
                         <button className="absolute right-3 top-1/2 -translate-y-1/2 bg-slate-900 hover:bg-blue-600 text-white w-14 h-14 rounded-2xl flex items-center justify-center transition-all shadow-lg hover:shadow-blue-500/30">
                             <ArrowRight size={24} />
                         </button>

@@ -7,6 +7,7 @@ import { ChevronLeft, Save, Image as ImageIcon, X } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { LOCATIONS } from '@/constants/tournaments';
+import toast from 'react-hot-toast';
 
 export default function AdminWritePage() {
   const router = useRouter();
@@ -96,7 +97,7 @@ export default function AdminWritePage() {
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      alert('관리자 로그인이 필요합니다.');
+      toast.error('관리자 로그인이 필요합니다.');
       setLoading(false);
       return;
     }
@@ -107,7 +108,7 @@ export default function AdminWritePage() {
     if (imageFile) {
       // 파일 크기 검증 (5MB 제한)
       if (imageFile.size > 5 * 1024 * 1024) {
-        alert('이미지 크기는 5MB 이하여야 합니다.');
+        toast.error('이미지 크기는 5MB 이하여야 합니다.');
         setLoading(false);
         return;
       }
@@ -115,7 +116,7 @@ export default function AdminWritePage() {
       // 파일 형식 검증
       const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
       if (!allowedTypes.includes(imageFile.type)) {
-        alert('JPG, PNG, WEBP 형식만 업로드 가능합니다.');
+        toast.error('JPG, PNG, WEBP 형식만 업로드 가능합니다.');
         setLoading(false);
         return;
       }
@@ -130,7 +131,7 @@ export default function AdminWritePage() {
 
       if (uploadError) {
         console.error('이미지 업로드 실패:', uploadError);
-        alert('이미지 업로드 중 오류가 발생했습니다.');
+        toast.error('이미지 업로드 중 오류가 발생했습니다.');
         setLoading(false);
         return;
       }
@@ -156,9 +157,9 @@ export default function AdminWritePage() {
 
     if (error) {
       console.error(error);
-      alert('저장 실패! 콘솔을 확인해주세요.');
+      toast.error('저장 실패! 콘솔을 확인해주세요.');
     } else {
-      alert(isEditMode ? '✅ 대회 정보가 수정되었습니다!' : '🎉 대회가 등록되었습니다!');
+      toast.success(isEditMode ? '✅ 대회 정보가 수정되었습니다!' : '🎉 대회가 등록되었습니다!');
       router.push('/admin');
     }
     setLoading(false);
