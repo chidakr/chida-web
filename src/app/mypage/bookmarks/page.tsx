@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { createClient } from '@/src/utils/supabase/client';
+import { createClient } from '@/utils/supabase/client';
 import Link from 'next/link';
 import { Bookmark, Calendar, MapPin, Trash2 } from 'lucide-react';
 
 export default function BookmarksPage() {
   const supabase = createClient();
-  const [list, setList] = useState<any[]>([]);
+  const [list, setList] = useState<import('@/types').BookmarkWithTournament[]>([]);
   const [loading, setLoading] = useState(true);
 
   // 데이터 불러오기
@@ -34,7 +34,7 @@ export default function BookmarksPage() {
 
   useEffect(() => {
     fetchBookmarks();
-  }, [supabase]);
+  }, []);
 
   // 북마크 삭제 함수 (여기서 바로 삭제 가능하게)
   const handleDelete = async (bookmarkId: string) => {

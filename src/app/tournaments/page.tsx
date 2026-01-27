@@ -1,13 +1,11 @@
 'use client';
 
 import React, { useEffect, useState, useRef, Suspense } from 'react';
-import { createClient } from '@/src/utils/supabase/client';
 import { useRouter } from 'next/navigation';
-import { 
-  Search, MapPin, Calendar, Filter, ChevronDown, Check, RefreshCw, Square, CheckSquare, 
-  Facebook, Youtube, Instagram // ✅ 소셜 아이콘 추가
-} from 'lucide-react';
-import TournamentCard from './TournamentCard';
+import { Search, Filter, ChevronDown, Check, RefreshCw, Square, CheckSquare, Facebook, Youtube, Instagram } from 'lucide-react';
+import { TournamentCard } from '@/components/tournaments';
+import { useTournaments } from '@/hooks/useTournaments';
+import { CATEGORIES, LOCATIONS, type CategoryItem } from '@/constants/tournaments';
 
 export default function TournamentsPage() {
   return (
@@ -17,36 +15,27 @@ export default function TournamentsPage() {
   );
 }
 
-const CATEGORIES = [
-  { id: 'all', label: '전체 보기', sub: [] },
-  { id: 'men', label: '남자 복식', color: 'bg-blue-500', sub: ['오픈부', '전국신인부', '지역신인부', '초급자(1년미만)', '초급자(2년미만)', '초급자(3년미만)'] },
-  { id: 'women', label: '여자 복식', color: 'bg-pink-500', sub: ['국화부', '개나리부', '초급자(1년미만)', '초급자(2년미만)', '초급자(3년미만)'] },
-  { id: 'mixed', label: '혼합 복식', color: 'bg-purple-500', sub: ['혼복 오픈부', '혼복 신인부'] },
-  { id: 'single', label: '단식', color: 'bg-green-500', sub: ['남자 단식', '여자 단식'] }
-];
-
-const LOCATIONS = [
-  '서울', '경기', '인천', '경기 광주', '강원', '대전', '세종', '충북', '충남', 
-  '부산', '대구', '울산', '경북', '경남', '전북', '광주', '전남', '제주'
-];
+const DEFAULT_FILTER_MAIN = '카테고리 선택';
 
 function TournamentListContent() {
   const router = useRouter();
-  const supabase = createClient();
-  const [tournaments, setTournaments] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  
-  const [filterMain, setFilterMain] = useState('카테고리 선택');
+  const [filterMain, setFilterMain] = useState(DEFAULT_FILTER_MAIN);
   const [filterSub, setFilterSub] = useState('');
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isLocationOpen, setIsLocationOpen] = useState(false);
-  const [hoveredCategory, setHoveredCategory] = useState(CATEGORIES[1]);
+  const [hoveredCategory, setHoveredCategory] = useState<CategoryItem>(CATEGORIES[1]);
 
   const categoryRef = useRef<HTMLDivElement>(null);
   const locationRef = useRef<HTMLDivElement>(null);
+
+  const { data: tournaments, loading } = useTournaments({
+    filterMain,
+    filterSub,
+    selectedLocations,
+    searchTerm,
+  });
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -57,39 +46,16 @@ function TournamentListContent() {
         setIsLocationOpen(false);
       }
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    async function fetchTournaments() {
-      setLoading(true);
-      let query = supabase.from('tournaments').select('*').order('created_at', { ascending: false });
-
-      if (filterSub) {
-         query = query.ilike('level', `%${filterSub}%`);
-      } else if (filterMain !== '카테고리 선택' && filterMain !== '전체 보기') {
-         const keyword = filterMain.replace(' 복식', '').replace('단식', '');
-         query = query.ilike('level', `%${keyword}%`); 
-      }
-
-      if (selectedLocations.length > 0) {
-        const orQuery = selectedLocations.map(loc => `location.ilike.%${loc}%`).join(',');
-        query = query.or(orQuery);
-      }
-
-      if (searchTerm) {
-        query = query.or(`title.ilike.%${searchTerm}%,location.ilike.%${searchTerm}%,organizer.ilike.%${searchTerm}%`);
-      }
-
-      const { data, error } = await query;
-      if (!error) setTournaments(data || []);
-      setLoading(false);
-    }
-    fetchTournaments();
-  }, [filterMain, filterSub, selectedLocations, searchTerm]);
-
-  const resetFilters = () => { setFilterMain('카테고리 선택'); setFilterSub(''); setSelectedLocations([]); setSearchTerm(''); };
+  const resetFilters = () => {
+    setFilterMain(DEFAULT_FILTER_MAIN);
+    setFilterSub('');
+    setSelectedLocations([]);
+    setSearchTerm('');
+  };
   const toggleLocation = (loc: string) => {
     if (selectedLocations.includes(loc)) setSelectedLocations(selectedLocations.filter(l => l !== loc));
     else setSelectedLocations([...selectedLocations, loc]);
@@ -155,7 +121,7 @@ function TournamentListContent() {
                             ${hoveredCategory.id === cat.id ? 'bg-white text-[#3182F6] shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
                         >
                           <div className="flex items-center gap-2">
-                            {cat.color && <div className={`w-2 h-2 rounded-full ${cat.color}`}></div>}
+                            {'color' in cat && cat.color ? <div className={`w-2 h-2 rounded-full ${cat.color}`} /> : null}
                             {cat.label}
                           </div>
                         </div>

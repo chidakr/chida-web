@@ -4,8 +4,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Menu, User, LogOut, LayoutDashboard, CreditCard, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
-import { createClient } from '@/src/utils/supabase/client';
-import LoginModal from '@/src/app/auth/LoginModal';
+import { createClient } from '@/utils/supabase/client';
+import { LoginModal } from '@/components/auth';
 
 export default function Header() {
   const router = useRouter();
@@ -15,7 +15,7 @@ export default function Header() {
   // 메뉴 영역 감지 Ref
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
   const [nickname, setNickname] = useState<string>(''); // 실제로는 full_name을 담음
   const supabase = createClient();
 

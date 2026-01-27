@@ -2,12 +2,12 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { createClient } from '@/src/utils/supabase/client';
+import { createClient } from '@/utils/supabase/client';
 import { Plus, Trash2, MapPin, Calendar, ArrowLeft } from 'lucide-react';
 
 export default function AdminDashboard() {
   const supabase = createClient();
-  const [list, setList] = useState<any[]>([]);
+  const [list, setList] = useState<import('@/types').Tournament[]>([]);
   const [loading, setLoading] = useState(true);
 
   // 대회 목록 불러오기
@@ -96,6 +96,13 @@ export default function AdminDashboard() {
 
                         {/* 액션 버튼 */}
                         <div className="flex items-center gap-2">
+                            <Link 
+                                href={`/admin/write?id=${item.id}`}
+                                className="p-3 text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded-xl transition-all"
+                                title="수정하기"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                            </Link>
                             <button 
                                 onClick={() => handleDelete(item.id)}
                                 className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"

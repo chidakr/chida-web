@@ -1,20 +1,24 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { createClient } from '@/src/utils/supabase/client';
+import React, { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
 import { ChevronLeft, Save, Image as ImageIcon, X } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image'; // Next.js 이미지 컴포넌트
+import Image from 'next/image';
+import { LOCATIONS } from '@/constants/tournaments';
 
 export default function AdminWritePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get('id'); // 수정 모드: ?id=xxx
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
 
-  // 이미지 파일 상태
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -25,8 +29,41 @@ export default function AdminWritePage() {
     max_participants: 32,
     site_url: '',
     description: '',
-    level: '오픈부', // 레벨 추가
+    level: '오픈부',
   });
+
+  // 수정 모드: 기존 데이터 불러오기
+  useEffect(() => {
+    if (editId) {
+      setIsEditMode(true);
+      const fetchTournament = async () => {
+        const { data, error } = await supabase
+          .from('tournaments')
+          .select('*')
+          .eq('id', editId)
+          .single();
+        
+        if (data && !error) {
+          setFormData({
+            title: data.title || '',
+            date: data.date || '',
+            time: data.time || '09:00',
+            location: data.location || '',
+            fee: data.fee || 0,
+            max_participants: data.max_participants || 32,
+            site_url: data.site_url || '',
+            description: data.description || '',
+            level: data.level || '오픈부',
+          });
+          if (data.image_url) {
+            setExistingImageUrl(data.image_url);
+            setPreviewUrl(data.image_url);
+          }
+        }
+      };
+      fetchTournament();
+    }
+  }, [editId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -52,10 +89,11 @@ export default function AdminWritePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!confirm('이대로 대회를 등록하시겠습니까?')) return;
+    const confirmMsg = isEditMode ? '수정 사항을 저장하시겠습니까?' : '이대로 대회를 등록하시겠습니까?';
+    if (!confirm(confirmMsg)) return;
 
     setLoading(true);
-    
+
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       alert('관리자 로그인이 필요합니다.');
@@ -63,16 +101,31 @@ export default function AdminWritePage() {
       return;
     }
 
-    let imageUrl = null;
+    let imageUrl = existingImageUrl;
 
-    // 1. 이미지가 있다면 먼저 업로드
+    // 새 이미지 업로드
     if (imageFile) {
+      // 파일 크기 검증 (5MB 제한)
+      if (imageFile.size > 5 * 1024 * 1024) {
+        alert('이미지 크기는 5MB 이하여야 합니다.');
+        setLoading(false);
+        return;
+      }
+
+      // 파일 형식 검증
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+      if (!allowedTypes.includes(imageFile.type)) {
+        alert('JPG, PNG, WEBP 형식만 업로드 가능합니다.');
+        setLoading(false);
+        return;
+      }
+
       const fileExt = imageFile.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random()}.${fileExt}`; // 파일명 중복 방지
+      const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
       const filePath = `${fileName}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('tournaments') // 아까 만든 버킷 이름
+        .from('tournaments')
         .upload(filePath, imageFile);
 
       if (uploadError) {
@@ -82,28 +135,31 @@ export default function AdminWritePage() {
         return;
       }
 
-      // 2. 업로드된 이미지의 공개 URL 가져오기
       const { data: { publicUrl } } = supabase.storage
         .from('tournaments')
         .getPublicUrl(filePath);
-      
+
       imageUrl = publicUrl;
     }
 
-    // 3. 데이터 저장 (insert)
-    const { error } = await supabase.from('tournaments').insert({
+    const payload = {
       ...formData,
-      image_url: imageUrl, // 업로드된 이미지 주소 저장
-      current_participants: 0,
-      status: 'recruiting',
-    });
+      image_url: imageUrl,
+      current_participants: isEditMode ? undefined : 0,
+      status: isEditMode ? undefined : 'recruiting',
+    };
+
+    // 수정 모드: update / 등록 모드: insert
+    const { error } = isEditMode
+      ? await supabase.from('tournaments').update(payload).eq('id', editId)
+      : await supabase.from('tournaments').insert(payload);
 
     if (error) {
       console.error(error);
-      alert('등록 실패! 콘솔을 확인해주세요.');
+      alert('저장 실패! 콘솔을 확인해주세요.');
     } else {
-      alert('🎉 대회가 이미지와 함께 등록되었습니다!');
-      router.push('/tournaments');
+      alert(isEditMode ? '✅ 대회 정보가 수정되었습니다!' : '🎉 대회가 등록되었습니다!');
+      router.push('/admin');
     }
     setLoading(false);
   };
@@ -117,7 +173,7 @@ export default function AdminWritePage() {
             <Link href="/admin" className="text-slate-500 font-bold flex items-center gap-1 hover:text-slate-800">
                 <ChevronLeft size={20}/> 관리자 홈
             </Link>
-            <h1 className="text-2xl font-black text-slate-900">대회 등록</h1>
+            <h1 className="text-2xl font-black text-slate-900">{isEditMode ? '대회 수정' : '대회 등록'}</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm space-y-8">
@@ -193,12 +249,16 @@ export default function AdminWritePage() {
 
                 <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-1">장소</label>
-                        <input 
+                        <label className="block text-sm font-bold text-slate-700 mb-1">지역</label>
+                        <select 
                             name="location" required value={formData.location} onChange={handleChange}
-                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500"
-                            placeholder="ex) 올림픽공원"
-                        />
+                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 font-bold"
+                        >
+                            <option value="">지역 선택</option>
+                            {LOCATIONS.map((loc) => (
+                                <option key={loc} value={loc}>{loc}</option>
+                            ))}
+                        </select>
                     </div>
                     <div>
                         <label className="block text-sm font-bold text-slate-700 mb-1">레벨 (구분)</label>
@@ -266,7 +326,7 @@ export default function AdminWritePage() {
                 className="w-full py-4 bg-slate-900 text-white font-bold text-lg rounded-xl hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 shadow-xl shadow-slate-200"
             >
                 <Save size={20}/>
-                {loading ? '이미지 업로드 중...' : '대회 등록 완료'}
+{loading ? (isEditMode ? '수정 저장중...' : '등록 중...') : (isEditMode ? '수정 완료' : '대회 등록 완료')}
             </button>
 
         </form>

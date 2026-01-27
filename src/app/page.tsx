@@ -1,42 +1,26 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { createClient } from '@/src/utils/supabase/client';
-import TournamentCard from './tournaments/TournamentCard';
-import { 
-  Search, ChevronRight, TrendingUp, ArrowRight, 
-  Facebook, Youtube, Instagram, Star, PlayCircle,
-  Users, Trophy, ShieldCheck, Sparkles
+import { useTournamentsSimple } from '@/hooks/useTournaments';
+import { TournamentCard } from '@/components/tournaments';
+import type { Tournament } from '@/types';
+import {
+  Search, ChevronRight, TrendingUp, ArrowRight,
+  Facebook, Youtube, Instagram, Trophy, PlayCircle,
 } from 'lucide-react';
 
 export default function HomePage() {
-  const supabase = createClient();
-  const [tournaments, setTournaments] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: tournaments, loading } = useTournamentsSimple();
   const [filter, setFilter] = useState('전체');
 
-  useEffect(() => {
-    const fetchTournaments = async () => {
-      const { data, error } = await supabase
-        .from('tournaments')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) console.error(error);
-      else setTournaments(data || []);
-      setLoading(false);
-    };
-    fetchTournaments();
-  }, []);
-
   const closingSoon = tournaments
-    .filter(t => t.status === 'recruiting')
+    .filter((t: Tournament) => t.status === 'recruiting')
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .slice(0, 4);
 
-  const filteredList = tournaments.filter(t => {
+  const filteredList = tournaments.filter((t: Tournament) => {
       if (filter === '전체') return true;
       if (filter === '마감임박') return t.status === 'recruiting'; 
       if (filter === '서울') return t.location.includes('서울');
@@ -423,7 +407,18 @@ function useCounter(end: number, duration: number = 2000) {
 }
 
 // ✨ 신뢰도 아이템 (카운팅 적용)
-function TrustItem({ end, label, isLast, suffix = "", separator = false }: any) {
+function TrustItem({
+  end,
+  label,
+  suffix = '',
+  separator = false,
+}: {
+  end: number;
+  label: string;
+  isLast?: boolean;
+  suffix?: string;
+  separator?: boolean;
+}) {
     const { count, countRef } = useCounter(end);
     const containerRef = useRef<HTMLDivElement>(null);
     
@@ -442,17 +437,27 @@ function TrustItem({ end, label, isLast, suffix = "", separator = false }: any) 
     }, []);
     
     return (
-        <div className={`flex flex-col items-center ${!isLast ? 'border-r border-white/10' : ''}`} ref={containerRef}>
+        <div className={`flex flex-col items-center`} ref={containerRef}>
             <span className="text-4xl md:text-6xl font-black mb-3 tabular-nums tracking-tight" ref={countRef}>
                 {separator ? count.toLocaleString() : count}{suffix}
             </span>
             <span className="text-slate-400 font-bold text-sm tracking-wide uppercase">{label}</span>
         </div>
-    )
+    );
 }
-
-// ✨ 인사이트 카드 (호버 줌 & 플레이 버튼 효과)
-function InsightCard({ category, title, desc, color, icon }: any) {
+function InsightCard({
+  category,
+  title,
+  desc,
+  color,
+  icon,
+}: {
+  category: string;
+  title: string;
+  desc: string;
+  color: string;
+  icon: string;
+}) {
     return (
         <div className="group cursor-pointer">
             <div className={`relative aspect-video rounded-3xl bg-gradient-to-br ${color} mb-6 overflow-hidden flex items-center justify-center shadow-inner`}>

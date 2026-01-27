@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { createClient } from '@/src/utils/supabase/client';
+import { createClient } from '@/utils/supabase/client';
 import { Trophy, ArrowRight, Activity, Calendar } from 'lucide-react';
 
 type Profile = {
@@ -16,7 +16,7 @@ type Profile = {
 export default function MyPageHome() {
   const supabase = createClient();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [recentApps, setRecentApps] = useState<any[]>([]);
+  const [recentApps, setRecentApps] = useState<import('@/types').Participant[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

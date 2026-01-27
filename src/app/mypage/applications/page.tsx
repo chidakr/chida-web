@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { createClient } from '@/src/utils/supabase/client';
+import { createClient } from '@/utils/supabase/client';
 import Link from 'next/link';
 import { ChevronLeft, Calendar, MapPin, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 export default function ApplicationsPage() {
   const supabase = createClient();
-  const [list, setList] = useState<any[]>([]);
+  const [list, setList] = useState<import('@/types').Participant[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { User, Trophy, Heart, Settings, LogOut } from 'lucide-react';
-import { createClient } from '@/src/utils/supabase/client';
+import { createClient } from '@/utils/supabase/client';
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -72,7 +72,7 @@ export default function Sidebar() {
   );
 }
 
-function MenuItem({ href, icon, label, active }: any) {
+function MenuItem({ href, icon, label, active }: { href: string; icon: React.ReactNode; label: string; active: boolean }) {
     return (
         <Link 
             href={href}

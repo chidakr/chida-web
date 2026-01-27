@@ -1,7 +1,6 @@
 'use client';
 
-// 👇 여기를 수정해주세요! (../../ 대신 @/src/ 사용)
-import KakaoLoginBtn from '../auth/KakaoLoginBtn';
+import { KakaoLoginBtn } from '@/components/auth';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
 

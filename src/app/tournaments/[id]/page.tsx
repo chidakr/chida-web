@@ -4,29 +4,13 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { createClient } from '@/src/utils/supabase/client';
-import { 
-    ChevronLeft, Calendar, MapPin, Users, Share2, Heart, 
-    CheckCircle2, Clock, ExternalLink 
+import { createClient } from '@/utils/supabase/client';
+import type { Tournament } from '@/types';
+import {
+  ChevronLeft, Calendar, MapPin, Users, Share2, Bookmark,
+  CheckCircle2, Clock, ExternalLink,
 } from 'lucide-react';
-import ApplyButton from '../ApplyButton';
-
-// 타입 정의
-type Tournament = {
-  id: string;
-  title: string;
-  date: string;
-  time: string;
-  location: string;
-  fee: number;
-  current_participants: number;
-  max_participants: number;
-  description: string;
-  status: string;
-  image_url?: string;
-  site_url?: string;
-  level?: string;
-};
+import { ApplyButton, BookmarkButton } from '@/components/tournaments';
 
 export default function TournamentDetailPage() {
   const { id } = useParams();
@@ -198,9 +182,7 @@ export default function TournamentDetailPage() {
 
                         {/* 서브 버튼들 (북마크, 공유) */}
                         <div className="grid grid-cols-2 gap-3 mb-8">
-                            <button className="h-11 flex items-center justify-center gap-2 border border-slate-200 rounded-lg font-bold text-sm text-slate-600 hover:bg-slate-50 transition-colors">
-                                <Heart size={16}/> 찜하기
-                            </button>
+                            <BookmarkButton tournamentId={tournament.id} variant="outline" />
                             <button className="h-11 flex items-center justify-center gap-2 border border-slate-200 rounded-lg font-bold text-sm text-slate-600 hover:bg-slate-50 transition-colors">
                                 <Share2 size={16}/> 공유하기
                             </button>
@@ -211,7 +193,7 @@ export default function TournamentDetailPage() {
                             <InfoRow label="모집마감" value={dDay} isHighlight={dDay !== '종료'} />
                             <InfoRow label="대회일정" value={formatDate(tournament.date)} />
                             <InfoRow label="대회장소" value={tournament.location.split(' ')[0] + ' (오프라인)'} />
-                            <InfoRow label="참가비용" value={`${tournament.fee.toLocaleString()}원`} />
+                            <InfoRow label="참가비용" value={`${Number(tournament.fee ?? 0).toLocaleString()}원`} />
                         </div>
 
                         {/* 하단 프로모션 박스 (레퍼런스 느낌) */}
@@ -250,7 +232,7 @@ export default function TournamentDetailPage() {
 }
 
 // ✨ 컴포넌트: 요약 아이템
-function SummaryItem({ icon, label, value }: any) {
+function SummaryItem({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
     return (
         <div className="flex items-center gap-3 p-2">
             <div className="w-10 h-10 rounded-full bg-white border border-slate-100 flex items-center justify-center text-slate-500 shadow-sm shrink-0">
@@ -279,7 +261,7 @@ function Badge({ text, active, type = 'solid' }: any) {
 }
 
 // ✨ 컴포넌트: 우측 사이드바 정보 행
-function InfoRow({ label, value, isHighlight }: any) {
+function InfoRow({ label, value, isHighlight }: { label: string; value: string; isHighlight?: boolean }) {
     return (
         <div className="flex justify-between items-center text-sm">
             <span className="text-slate-500 font-medium">{label}</span>

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/src/utils/supabase/client';
+import { createClient } from '@/utils/supabase/client';
 import { Trash2, AlertCircle } from 'lucide-react';
 
 export default function SettingsPage() {
@@ -16,7 +16,7 @@ export default function SettingsPage() {
 
     setLoading(true);
     try {
-      const res = await fetch('/api/withdraw', { method: 'DELETE' });
+      const res = await fetch('/api/auth/withdraw', { method: 'DELETE' });
       if (!res.ok) throw new Error('탈퇴 처리에 실패했습니다.');
 
       await supabase.auth.signOut();

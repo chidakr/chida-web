@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, Camera } from 'lucide-react';
 
 export default function RegisterTournament() {
   const router = useRouter();
+  const supabase = createClient();
   const [loading, setLoading] = useState(false);
   
   // 입력 받을 데이터들
@@ -26,7 +27,7 @@ export default function RegisterTournament() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
