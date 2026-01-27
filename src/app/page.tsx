@@ -320,11 +320,10 @@ export default function HomePage() {
       {/* =========================================
           ✅ Footer (Simple & Clean)
       ========================================= */}
-      <footer className="bg-white pb-20 mt-auto border-t border-slate-200">
+      <footer className="bg-white py-20 mt-24 border-t border-slate-200">
         <div className="max-w-7xl mx-auto px-5">
             
-            {/* 구분선 (border-t를 위로 이동시킴) */}
-            <div className="pt-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
                 
                 {/* 왼쪽: 회사 정보 */}
                 <div className="text-left space-y-2">
