@@ -48,24 +48,24 @@ export default function TournamentCard({ tournament }: { tournament: Tournament 
     (typeof dDay === 'string' && dDay.startsWith('D-') && parseInt(dDay.split('-')[1]) <= 3);
 
   const dDayBadgeStyle = isUrgent
-    ? 'bg-yellow-100 text-red-600 border border-yellow-200 font-extrabold'
-    : 'bg-slate-50 text-slate-500 border border-slate-100 font-bold';
+    ? 'bg-gradient-to-r from-red-50 to-orange-50 text-red-600 border border-red-100'
+    : 'bg-white/95 text-slate-600 border border-white/50 backdrop-blur-sm';
 
   const statusBadgeStyle =
     tournament.status === 'recruiting'
-      ? 'bg-white/90 text-blue-600 backdrop-blur-md'
-      : 'bg-slate-200/90 text-slate-500 backdrop-blur-md';
+      ? 'bg-blue-500 text-white'
+      : 'bg-slate-400 text-white';
 
   return (
-    <div className="group flex flex-col bg-white rounded-xl border border-slate-200 overflow-hidden hover:border-blue-400 hover:shadow-md transition-all duration-300 h-full">
-      {/* 이미지 영역 - 컴팩트 */}
-      <Link href={`/tournaments/${tournament.id}`} className="relative aspect-[4/3] bg-slate-50 overflow-hidden">
+    <div className="group flex flex-col bg-white rounded-2xl border border-slate-100 overflow-hidden hover:border-slate-200 hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 h-full">
+      {/* 이미지 영역 */}
+      <Link href={`/tournaments/${tournament.id}`} className="relative aspect-[4/3] bg-gradient-to-br from-slate-50 to-slate-100 overflow-hidden">
         {tournament.image_url ? (
           <Image
             src={tournament.image_url}
             alt={tournament.title}
             fill
-            className="object-cover group-hover:scale-105 transition-transform duration-500"
+            className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.style.display = 'none';
@@ -73,27 +73,27 @@ export default function TournamentCard({ tournament }: { tournament: Tournament 
             unoptimized={tournament.image_url.includes('supabase.co')}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-slate-300 bg-slate-50">
-            <Trophy size={32} className="opacity-30" />
+          <div className="w-full h-full flex items-center justify-center text-slate-300">
+            <Trophy size={28} className="opacity-20" />
           </div>
         )}
 
         {/* 북마크 버튼 오버레이 - 우측 상단 */}
-        <div className="absolute top-2 right-2 z-10" onClick={(e) => e.preventDefault()}>
+        <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200" onClick={(e) => e.preventDefault()}>
           <BookmarkButton tournamentId={tournament.id} />
         </div>
 
         {/* 상태 뱃지 - 좌측 상단 */}
-        <div className="absolute top-2 left-2">
-          <span className={`px-2 py-0.5 text-[10px] font-bold rounded ${statusBadgeStyle}`}>
+        <div className="absolute top-3 left-3">
+          <span className={`px-2.5 py-1 text-[10px] font-semibold rounded-full ${statusBadgeStyle} shadow-sm`}>
             {tournament.status === 'recruiting' ? '모집중' : '마감'}
           </span>
         </div>
 
         {/* D-Day 뱃지 */}
         {tournament.status === 'recruiting' && (
-          <div className="absolute bottom-2 left-2">
-            <span className={`px-2 py-0.5 text-[10px] rounded flex items-center gap-1 ${dDayBadgeStyle}`}>
+          <div className="absolute bottom-3 left-3">
+            <span className={`px-2.5 py-1 text-[10px] rounded-full flex items-center gap-1 ${dDayBadgeStyle} shadow-sm font-semibold`}>
               {isUrgent && <Clock size={9} />}
               {dDay}
             </span>
@@ -101,34 +101,36 @@ export default function TournamentCard({ tournament }: { tournament: Tournament 
         )}
       </Link>
 
-      {/* 텍스트 영역 - 컴팩트 */}
-      <Link href={`/tournaments/${tournament.id}`} className="p-4 flex flex-col flex-1">
+      {/* 텍스트 영역 */}
+      <Link href={`/tournaments/${tournament.id}`} className="p-4 flex flex-col flex-1 gap-3">
         {/* 레벨 태그 */}
-        <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded inline-block mb-2">
-          {tournament.level || '오픈부'}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+            {tournament.level || '오픈부'}
+          </span>
+        </div>
 
-        {/* 제목 - 2줄 고정 */}
-        <h3 className="font-bold text-slate-900 text-sm leading-tight mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors min-h-[2.5rem]">
+        {/* 제목 */}
+        <h3 className="font-semibold text-slate-900 text-sm leading-snug line-clamp-2 group-hover:text-blue-600 transition-colors">
           {tournament.title}
         </h3>
 
         {/* 장소 */}
-        <div className="flex items-center gap-1 mb-3">
-          <MapPin size={12} className="text-slate-400 shrink-0" />
-          <span className="text-xs text-slate-500 line-clamp-1">
+        <div className="flex items-center gap-1.5">
+          <MapPin size={13} className="text-slate-400 shrink-0" />
+          <span className="text-xs text-slate-600 line-clamp-1 font-medium">
             {tournament.location || '장소 미정'}
           </span>
         </div>
 
         {/* 하단 정보 */}
-        <div className="mt-auto pt-3 border-t border-slate-100">
-          <div className="flex items-center justify-between text-xs">
-            <div className="flex items-center gap-1 text-slate-500">
-              <Calendar size={11} />
-              {formattedDate}
+        <div className="mt-auto pt-3 border-t border-slate-50">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-xs text-slate-500">
+              <Calendar size={12} className="text-slate-400" />
+              <span className="font-medium">{formattedDate}</span>
             </div>
-            <div className="font-bold text-slate-900">{formattedFee}</div>
+            <div className="text-sm font-bold text-slate-900">{formattedFee}</div>
           </div>
         </div>
       </Link>

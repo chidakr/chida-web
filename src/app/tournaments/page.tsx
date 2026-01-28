@@ -198,16 +198,16 @@ function TournamentListContent() {
           </div>
           
           <div className="flex items-center gap-3">
-            {/* 부트텐트 스타일 정렬 드롭다운 */}
+            {/* 정렬 드롭다운 */}
             <div className="relative">
               <select className="appearance-none px-5 py-2.5 pr-10 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#3182F6] bg-white hover:bg-slate-50 transition-all cursor-pointer font-medium text-slate-700 shadow-sm">
                 <option>기본 정렬</option>
                 <option>마감 임박순</option>
-                <option>개강 빠른순</option>
-                <option>비용 낮은순</option>
-                <option>비용 높은순</option>
-                <option>짧은 기간순</option>
-                <option>긴 기간순</option>
+                <option>대회 시작순</option>
+                <option>참가비 낮은순</option>
+                <option>참가비 높은순</option>
+                <option>대회 기간 짧은순</option>
+                <option>대회 기간 긴순</option>
               </select>
               <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"/>
             </div>
@@ -228,7 +228,7 @@ function TournamentListContent() {
         {loading ? (
           <div className="text-center py-20 text-slate-400">대회 정보를 불러오는 중... 🎾</div>
         ) : (
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
              {tournaments.length > 0 ? (
                tournaments.map((t) => (
                  <TournamentCard key={t.id} tournament={t} />
