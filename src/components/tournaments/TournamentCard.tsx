@@ -59,7 +59,7 @@ export default function TournamentCard({ tournament }: { tournament: Tournament 
   return (
     <div className="group flex flex-col bg-white rounded-2xl border border-slate-100 overflow-hidden hover:border-slate-200 hover:shadow-2xl hover:shadow-slate-200/40 transition-all duration-300 h-full">
       {/* 이미지 영역 */}
-      <Link href={`/tournaments/${tournament.id}`} className="relative aspect-[3/2] bg-gradient-to-br from-slate-50 to-slate-100 overflow-hidden">
+      <Link href={`/tournaments/${tournament.id}`} className="relative aspect-[4/3] bg-gradient-to-br from-slate-50 to-slate-100 overflow-hidden">
         {tournament.image_url ? (
           <Image
             src={tournament.image_url}

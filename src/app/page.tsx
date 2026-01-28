@@ -13,7 +13,7 @@ import {
 
 export default function HomePage() {
   const { data: tournaments, loading } = useTournamentsSimple();
-  const [filter, setFilter] = useState('전체');
+  const [filter, setFilter] = useState('전체 보기');
   const [searchQuery, setSearchQuery] = useState('');
 
   const closingSoon = tournaments
@@ -30,13 +30,13 @@ export default function HomePage() {
         if (!matchesTitle && !matchesLocation) return false;
       }
       
-      // 2. 카테고리 필터링
-      if (filter === '전체') return true;
-      if (filter === '마감임박') return t.status === 'recruiting'; 
-      if (filter === '서울') return t.location.includes('서울');
-      if (filter === '경기') return t.location.includes('경기');
-      if (filter === '테린이') return t.level?.includes('테린') || t.level?.includes('신인');
-      if (filter === '오픈부') return t.level?.includes('오픈');
+      // 2. 카테고리 필터링 (복식 타입별 - 제목 기반)
+      if (filter === '전체 보기') return true;
+      const titleLower = t.title?.toLowerCase() || '';
+      if (filter === '남자 복식') return titleLower.includes('남자') && (titleLower.includes('복식') || titleLower.includes('더블'));
+      if (filter === '여자 복식') return titleLower.includes('여자') && (titleLower.includes('복식') || titleLower.includes('더블'));
+      if (filter === '혼합 복식') return titleLower.includes('혼합') || titleLower.includes('혼복') || titleLower.includes('믹스');
+      if (filter === '단식') return titleLower.includes('단식') || titleLower.includes('싱글');
       return true;
   });
 
@@ -77,21 +77,20 @@ export default function HomePage() {
                         더 이상 단톡방을 헤매지 마세요. <b>검증된 정보</b>만 모았습니다.
                     </p>
 
-                    {/* 대형 검색바 (글래스모피즘 + 포커스링) */}
-                    <div className="relative max-w-xl shadow-2xl shadow-blue-900/5 rounded-[2rem] group transition-all hover:-translate-y-1">
-                        <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-[2rem] opacity-0 group-hover:opacity-100 blur transition-opacity duration-500 -z-10"></div>
+                    {/* 대형 검색바 (Toss Premium Web Style) */}
+                    <div className="relative max-w-xl group transition-all hover:-translate-y-1">
                         <input 
                             type="text" 
                             placeholder="지역, 대회명으로 검색..." 
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full h-20 pl-16 pr-20 bg-white border-2 border-transparent rounded-[2rem] focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 font-bold text-xl text-slate-800 transition-all placeholder:text-slate-300"
+                            className="w-full h-20 pl-16 pr-20 bg-gray-50 border-0 rounded-[2rem] focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-100/50 font-bold text-xl text-slate-800 transition-all placeholder:text-gray-400 shadow-sm"
                         />
-                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-hover:text-blue-500 transition-colors" size={28}/>
+                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 transition-colors" size={28}/>
                         {searchQuery && (
                           <button 
                             onClick={() => setSearchQuery('')}
-                            className="absolute right-20 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                            className="absolute right-20 top-1/2 -translate-y-1/2 text-gray-400 hover:text-slate-600 transition-colors"
                           >
                             <X size={24} />
                           </button>
@@ -154,7 +153,7 @@ export default function HomePage() {
                 </Link>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
                 {closingSoon.length > 0 ? (
                     closingSoon.map((t) => (
                         <div key={t.id} className="h-full">
@@ -207,16 +206,16 @@ export default function HomePage() {
                     </p>
                 </div>
                 
-                {/* 퀵 필터 */}
+                {/* Premium Horizontal Category Chips (Toss Style) */}
                 <div className="flex items-center gap-2 overflow-x-auto pb-4 md:pb-0 w-full md:w-auto no-scrollbar">
-                    {['전체', '서울', '경기', '테린이', '오픈부'].map((tab) => (
+                    {['전체 보기', '남자 복식', '여자 복식', '혼합 복식', '단식'].map((tab) => (
                         <button 
                             key={tab}
                             onClick={() => setFilter(tab)}
-                            className={`px-6 py-3 rounded-full text-sm font-bold whitespace-nowrap transition-all border shadow-sm active:scale-95 ${
+                            className={`px-6 py-3 rounded-full text-sm font-bold whitespace-nowrap transition-all active:scale-95 ${
                                 filter === tab 
-                                ? 'bg-slate-900 text-white border-slate-900 shadow-slate-200' 
-                                : 'bg-white text-slate-500 border-slate-200 hover:bg-white hover:border-blue-300 hover:text-blue-600 hover:shadow-md'
+                                ? 'bg-black text-white shadow-sm' 
+                                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
                             }`}
                         >
                             {tab}
@@ -225,7 +224,7 @@ export default function HomePage() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-20">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8 mb-20">
                 {filteredList.length > 0 ? (
                     filteredList.map((t) => (
                         <div key={t.id}>
@@ -320,10 +319,10 @@ export default function HomePage() {
       {/* =========================================
           ✅ Footer (Simple & Clean)
       ========================================= */}
-      <footer className="bg-white py-20 mt-24 border-t border-slate-200">
-        <div className="max-w-7xl mx-auto px-5">
+      <footer className="bg-white pb-20 mt-24">
+        <div className="max-w-7xl mx-auto px-5 pt-20">
             
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+            <div className="border-t border-slate-200 pt-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
                 
                 {/* 왼쪽: 회사 정보 */}
                 <div className="text-left space-y-2">

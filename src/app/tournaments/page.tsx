@@ -259,17 +259,12 @@ function TournamentListContent() {
         )}
       </main>
 
-      {/* ✅ Footer 추가 (메인 페이지 디자인 유지) */}
-      <footer className="bg-white pb-20 mt-auto border-t border-slate-200">
-        <div className="max-w-7xl mx-auto px-5">
-            
-            {/* 구분선 (border-t를 위로 이동시킴) */}
-            <div className="pt-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
-                
-                {/* 왼쪽: 회사 정보 */}
+      {/* Footer */}
+      <footer className="bg-white pb-20 mt-auto">
+        <div className="max-w-7xl mx-auto px-5 pt-20">
+            <div className="border-t border-slate-200 pt-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
                 <div className="text-left space-y-2">
                     <p className="text-[#65676A] font-medium text-base">© 2026 Chida Corp.</p>
-                    
                     <div className="flex flex-col gap-1 text-base text-[#A7A7AA] font-normal">
                         <div className="flex flex-wrap items-center gap-2">
                             <span>주식회사 치다</span>
@@ -279,14 +274,11 @@ function TournamentListContent() {
                         <p>사업자등록번호 : 000-00-00000</p>
                     </div>
                 </div>
-
-                {/* 오른쪽: 소셜 아이콘 */}
                 <div className="flex gap-3">
                     <SocialIcon href="https://facebook.com" icon={<Facebook size={20} />} />
                     <SocialIcon href="https://youtube.com" icon={<Youtube size={20} />} />
                     <SocialIcon href="https://instagram.com" icon={<Instagram size={20} />} />
                 </div>
-
             </div>
         </div>
       </footer>
@@ -294,7 +286,6 @@ function TournamentListContent() {
   );
 }
 
-// ✨ Footer용 소셜 아이콘 컴포넌트
 function SocialIcon({ href, icon }: { href: string, icon: React.ReactNode }) {
     return (
         <a 
