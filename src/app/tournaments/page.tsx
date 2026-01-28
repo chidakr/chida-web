@@ -6,6 +6,10 @@ import { Search, Filter, ChevronDown, ChevronRight, Check, RefreshCw, Square, Ch
 import { TournamentCard } from '@/components/tournaments';
 import { useTournaments } from '@/hooks/useTournaments';
 import { CATEGORIES, LOCATIONS, type CategoryItem } from '@/constants/tournaments';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 export default function TournamentsPage() {
   return (
@@ -120,49 +124,41 @@ function TournamentListContent() {
     <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-900 flex flex-col">
       
       {/* BootTent Style Filter Bar - 헤더 바로 아래 */}
-      <div className="sticky top-16 left-0 right-0 z-40 bg-white border-b border-slate-100 shadow-sm">
+      <div className="sticky top-16 left-0 right-0 z-40 bg-white border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-5 py-3">
           <div className="flex items-center gap-2 flex-wrap">
             
-            {/* 북마크 버튼 */}
-            <button
+            {/* 북마크 버튼 - 토스 스타일 */}
+            <Button
+              variant="outline"
               onClick={() => setShowBookmarksOnly(!showBookmarksOnly)}
-              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-all ${
-                showBookmarksOnly
-                  ? 'bg-red-50 text-red-600 border-red-200 shadow-sm'
-                  : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-              }`}
+              className={showBookmarksOnly 
+                ? 'bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100 hover:border-rose-300' 
+                : 'hover:bg-slate-50'}
             >
-              <Heart size={16} className={showBookmarksOnly ? 'fill-current' : ''} strokeWidth={2.5} />
+              <Heart size={16} className={showBookmarksOnly ? 'fill-current' : ''} />
               북마크
-            </button>
+            </Button>
 
             {/* 검색 버튼 */}
-            <button
+            <Button
+              variant={isSearchExpanded ? "default" : "outline"}
               onClick={() => setIsSearchExpanded(!isSearchExpanded)}
-              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-all ${
-                isSearchExpanded
-                  ? 'bg-blue-50 text-blue-600 border-blue-200 shadow-sm'
-                  : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-              }`}
             >
-              <Search size={16} strokeWidth={2.5} />
+              <Search size={16} />
               검색
-            </button>
+            </Button>
             
             {/* [필터 1] 카테고리 */}
             <div className="relative z-50" ref={categoryRef}>
-              <button 
+              <Button 
+                variant={isCategoryOpen || (filterMain !== '카테고리 선택' && filterMain !== '전체 보기') ? "secondary" : "outline"}
                 onClick={() => { setIsCategoryOpen(!isCategoryOpen); setIsLocationOpen(false); }}
-                className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-all ${
-                  isCategoryOpen || (filterMain !== '카테고리 선택' && filterMain !== '전체 보기')
-                    ? 'bg-slate-50 text-slate-900 border-slate-300 shadow-sm' 
-                    : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                }`}
+                className="min-w-[160px] justify-between"
               >
                 <span className="truncate max-w-[140px]">{filterSub || filterMain}</span>
-                <ChevronDown size={14} className={`transition-transform ${isCategoryOpen ? 'rotate-180' : ''}`} strokeWidth={2.5} />
-              </button>
+                <ChevronDown size={14} className={`transition-transform ${isCategoryOpen ? 'rotate-180' : ''}`} />
+              </Button>
 
               {isCategoryOpen && (
                 <div className="absolute top-full left-0 mt-2 w-[360px] md:w-[500px] bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden flex z-50 animate-in fade-in slide-in-from-top-2 duration-200">
@@ -211,45 +207,82 @@ function TournamentListContent() {
               )}
             </div>
 
-            {/* [필터 2] 지역 */}
+            {/* [필터 2] 지역 - 부트텐트 체크박스 스타일 */}
             <div className="relative z-40" ref={locationRef}>
-              <button 
+              <Button
+                variant={isLocationOpen || selectedLocations.length > 0 ? "secondary" : "outline"}
                 onClick={() => { setIsLocationOpen(!isLocationOpen); setIsCategoryOpen(false); }}
-                className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-all ${
-                  isLocationOpen || selectedLocations.length > 0
-                    ? 'bg-slate-50 text-slate-900 border-slate-300 shadow-sm' 
-                    : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                }`}
               >
-                <span>{selectedLocations.length === 0 ? '지역' : `지역 ${selectedLocations.length}`}</span>
-                <ChevronDown size={14} className={`transition-transform ${isLocationOpen ? 'rotate-180' : ''}`} strokeWidth={2.5} />
-              </button>
+                <span>{selectedLocations.length === 0 ? '지역' : `지역 (${selectedLocations.length})`}</span>
+                <ChevronDown size={14} className={`transition-transform ${isLocationOpen ? 'rotate-180' : ''}`} />
+              </Button>
 
               {isLocationOpen && (
-                <div className="absolute top-full left-0 mt-2 w-[360px] bg-white rounded-xl shadow-2xl border border-slate-200 p-6 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                    <div className="flex justify-between items-center mb-4 pb-4 border-b border-slate-100">
-                        <span className="text-sm font-bold text-slate-900">지역 선택</span>
-                        {selectedLocations.length > 0 && (
-                          <button onClick={() => setSelectedLocations([])} className="text-xs text-blue-600 hover:text-blue-700 font-medium">
-                            초기화
-                          </button>
-                        )}
+                <div className="absolute top-full left-0 mt-2 w-[400px] bg-white rounded-xl shadow-2xl border border-slate-200 p-5 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                    {/* 헤더 */}
+                    <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-slate-900">지역 선택</span>
+                          {selectedLocations.length > 0 && (
+                            <span className="text-xs text-blue-600 font-semibold">
+                              {selectedLocations.length}개 선택됨
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {selectedLocations.length > 0 && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => setSelectedLocations([])}
+                              className="h-7 text-xs"
+                            >
+                              초기화
+                            </Button>
+                          )}
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={toggleAllLocations}
+                            className="h-7 text-xs"
+                          >
+                            {selectedLocations.length === LOCATIONS.length ? '전체 해제' : '전체 선택'}
+                          </Button>
+                        </div>
                     </div>
-                    <div className="grid grid-cols-4 gap-2 max-h-64 overflow-y-auto">
+                    
+                    {/* 체크박스 리스트 */}
+                    <div className="max-h-[320px] overflow-y-auto space-y-1">
                       {LOCATIONS.map((loc) => {
                         const isSelected = selectedLocations.includes(loc);
                         return (
-                          <button 
-                            key={loc} 
+                          <div
+                            key={loc}
                             onClick={() => toggleLocation(loc)}
-                            className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all ${
                               isSelected 
-                                ? 'bg-blue-500 text-white shadow-sm' 
-                                : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                                ? 'bg-blue-50 hover:bg-blue-100' 
+                                : 'hover:bg-slate-50'
                             }`}
                           >
-                            {loc}
-                          </button>
+                            {/* 커스텀 체크박스 */}
+                            <div className={`flex items-center justify-center w-5 h-5 rounded border-2 transition-all ${
+                              isSelected 
+                                ? 'bg-blue-500 border-blue-500' 
+                                : 'bg-white border-slate-300'
+                            }`}>
+                              {isSelected && (
+                                <Check size={14} className="text-white" strokeWidth={3} />
+                              )}
+                            </div>
+                            
+                            {/* 지역명 */}
+                            <span className={`text-sm font-medium transition-colors ${
+                              isSelected ? 'text-blue-700' : 'text-slate-700'
+                            }`}>
+                              {loc}
+                            </span>
+                          </div>
                         );
                       })}
                     </div>
@@ -259,71 +292,73 @@ function TournamentListContent() {
 
             {/* 필터 초기화 */}
             {(filterMain !== '카테고리 선택' || selectedLocations.length > 0 || showBookmarksOnly || searchTerm) && (
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={resetFilters}
-                className="text-sm text-slate-400 hover:text-slate-700 font-medium transition-colors ml-1"
               >
                 초기화
-              </button>
+              </Button>
             )}
           </div>
 
           {/* Active Filter Chips (선택된 필터 표시) */}
           {((filterMain !== '카테고리 선택' && filterMain !== '전체 보기') || selectedLocations.length > 0) && (
-            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100">
+            <div className="flex items-center gap-2 mt-3 pt-3">
               {filterSub && (
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-md text-xs font-semibold">
+                <Badge variant="default" className="gap-1.5">
                   <span>{filterSub}</span>
                   <button
-                    onClick={() => {
-                      setFilterSub('');
-                    }}
-                    className="hover:bg-blue-100 rounded-full p-0.5 transition-colors"
+                    onClick={() => setFilterSub('')}
+                    className="hover:bg-primary/80 rounded-full p-0.5 transition-colors"
                   >
-                    <X size={12} strokeWidth={3} />
+                    <X size={12} />
                   </button>
-                </div>
+                </Badge>
               )}
               {selectedLocations.map((loc) => (
-                <div
+                <Badge
                   key={loc}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 text-slate-700 rounded-md text-xs font-semibold"
+                  variant="secondary"
+                  className="gap-1.5"
                 >
                   <span>{loc}</span>
                   <button
                     onClick={() => toggleLocation(loc)}
-                    className="hover:bg-slate-200 rounded-full p-0.5 transition-colors"
+                    className="hover:bg-secondary/80 rounded-full p-0.5 transition-colors"
                   >
-                    <X size={12} strokeWidth={3} />
+                    <X size={12} />
                   </button>
-                </div>
+                </Badge>
               ))}
             </div>
           )}
 
-          {/* Expandable Search Input (부트텐트 스타일) */}
+          {/* Expandable Search Input (Shadcn UI) */}
           <div
             className={`overflow-hidden transition-all duration-300 ease-in-out ${
-              isSearchExpanded ? 'max-h-20 opacity-100 mt-3 pt-3 border-t border-slate-100' : 'max-h-0 opacity-0'
+              isSearchExpanded ? 'max-h-20 opacity-100 mt-3' : 'max-h-0 opacity-0'
             }`}
           >
             <div className="relative">
-              <input
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground z-10" />
+              <Input
                 type="text"
                 placeholder="대회명, 지역으로 검색..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-3 pl-10 pr-10 bg-slate-50 border-0 rounded-lg focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-100 text-sm font-medium placeholder:text-slate-400 transition-all"
+                className="pl-9 pr-9 outline-none focus-visible:ring-2 focus-visible:ring-blue-100 transition-shadow"
                 autoFocus={isSearchExpanded}
               />
-              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" strokeWidth={2.5} />
               {searchTerm && (
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setSearchTerm('')}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
                 >
-                  <X size={16} strokeWidth={2.5} />
-                </button>
+                  <X size={14} />
+                </Button>
               )}
             </div>
           </div>

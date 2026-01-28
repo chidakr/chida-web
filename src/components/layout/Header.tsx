@@ -77,7 +77,7 @@ export default function Header() {
           <div className="flex items-center gap-8">
             <div
               className="text-2xl font-black tracking-tighter cursor-pointer flex items-center gap-1"
-              onClick={() => router.push('/')}
+              onClick={() => window.location.href = '/'}
             >
               <span className="text-black">치다</span>
               <span className="w-2 h-2 rounded-full bg-[#3182F6] mt-3"></span>
