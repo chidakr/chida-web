@@ -69,7 +69,7 @@ function TournamentListContent() {
     <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-900 flex flex-col">
       
       {/* Category Filter Bar (부트텐트 스타일) */}
-      <div className="sticky top-16 left-0 right-0 z-40 bg-white border-b border-slate-200">
+      <div className="sticky top-0 left-0 right-0 z-40 bg-white border-b border-slate-200 mt-16">
         <div className="max-w-7xl mx-auto px-5 py-3">
           <div className="flex flex-col md:flex-row items-start gap-3">
             
@@ -174,14 +174,34 @@ function TournamentListContent() {
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-5 py-12 flex-1 w-full"> 
-        <div className="flex items-center justify-between mb-8">
-           <h2 className="text-lg font-semibold flex items-center gap-2 text-slate-700">
-             <Filter size={18} className="text-slate-400"/>
-             {filterSub || filterMain} 
-             {selectedLocations.length > 0 && <span className="text-[#3182F6] text-sm"> · {selectedLocations.join(', ')}</span>}
-             <span className="text-slate-400 text-sm font-normal ml-1">({tournaments.length})</span>
-           </h2>
+      <main className="max-w-7xl mx-auto px-5 py-6 flex-1 w-full"> 
+        
+        {/* FilterBar (N개 찾았어요 + 정렬/검색) */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+          <div className="text-sm">
+            <span className="text-slate-900 font-bold">모집 중인 대회 </span>
+            <span className="text-[#3182F6] font-bold">{tournaments.length}</span>
+            <span className="text-slate-900 font-bold">개를 찾았어요.</span>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <select className="px-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-[#3182F6] bg-white">
+              <option>기본 정렬</option>
+              <option>마감임박순</option>
+              <option>최신순</option>
+            </select>
+            
+            <div className="relative">
+              <input 
+                type="text" 
+                placeholder="대회 검색" 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-48 px-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-[#3182F6] pl-10"
+              />
+              <Search size={16} className="absolute left-3 top-2.5 text-slate-400"/>
+            </div>
+          </div>
         </div>
         
         {loading ? (

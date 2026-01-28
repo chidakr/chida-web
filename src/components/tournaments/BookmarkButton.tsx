@@ -63,17 +63,17 @@ export default function BookmarkButton({ tournamentId, variant = 'default' }: Bo
   // 스타일 variant
   const baseStyles = variant === 'outline'
     ? 'h-11 flex items-center justify-center gap-2 border rounded-lg font-bold text-sm transition-colors'
-    : 'w-14 h-14 flex items-center justify-center border rounded-xl transition-all active:scale-95';
+    : 'w-8 h-8 flex items-center justify-center rounded-lg transition-all hover:scale-110 active:scale-95 backdrop-blur-sm';
 
   const activeStyles = variant === 'outline'
     ? isBookmarked
       ? 'border-blue-500 bg-blue-50 text-blue-600'
       : 'border-slate-200 text-slate-600 hover:bg-slate-50'
     : isBookmarked
-      ? 'bg-blue-50 border-blue-200 text-[#3182F6]'
-      : 'bg-white border-slate-200 text-slate-400 hover:text-slate-600';
+      ? 'bg-white/90 text-blue-600'
+      : 'bg-white/70 text-slate-400 hover:text-slate-700 hover:bg-white/90';
 
-  const iconSize = variant === 'outline' ? 16 : 24;
+  const iconSize = variant === 'outline' ? 16 : 18;
 
   return (
     <button
