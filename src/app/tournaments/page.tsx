@@ -68,8 +68,21 @@ function TournamentListContent() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-900 flex flex-col">
       
+      {/* Hero Section */}
+      <div className="relative pt-32 pb-12 bg-white overflow-hidden border-b border-slate-100">
+         <div className="relative z-10 max-w-7xl mx-auto px-5">
+            <h1 className="text-3xl md:text-4xl font-black mb-3 text-slate-900 tracking-tight">
+               어떤 대회를 <span className="text-[#3182F6]">찾으시나요?</span>
+            </h1>
+            <p className="text-slate-500 font-medium text-lg">
+               원하는 조건으로 검색하고 바로 신청해보세요.
+            </p>
+         </div>
+         <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-blue-50/50 to-transparent pointer-events-none"></div>
+      </div>
+
       {/* Category Filter Bar (부트텐트 스타일) */}
-      <div className="sticky top-0 left-0 right-0 z-40 bg-white border-b border-slate-200 mt-16">
+      <div className="sticky top-16 left-0 right-0 z-40 bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-5 py-3">
           <div className="flex flex-col md:flex-row items-start gap-3">
             
@@ -178,18 +191,26 @@ function TournamentListContent() {
         
         {/* FilterBar (N개 찾았어요 + 정렬/검색) */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-          <div className="text-sm">
+          <div className="text-base">
             <span className="text-slate-900 font-bold">모집 중인 대회 </span>
-            <span className="text-[#3182F6] font-bold">{tournaments.length}</span>
+            <span className="text-[#3182F6] font-bold text-lg">{tournaments.length}</span>
             <span className="text-slate-900 font-bold">개를 찾았어요.</span>
           </div>
           
           <div className="flex items-center gap-3">
-            <select className="px-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-[#3182F6] bg-white">
-              <option>기본 정렬</option>
-              <option>마감임박순</option>
-              <option>최신순</option>
-            </select>
+            {/* 부트텐트 스타일 정렬 드롭다운 */}
+            <div className="relative">
+              <select className="appearance-none px-5 py-2.5 pr-10 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#3182F6] bg-white hover:bg-slate-50 transition-all cursor-pointer font-medium text-slate-700 shadow-sm">
+                <option>기본 정렬</option>
+                <option>마감 임박순</option>
+                <option>개강 빠른순</option>
+                <option>비용 낮은순</option>
+                <option>비용 높은순</option>
+                <option>짧은 기간순</option>
+                <option>긴 기간순</option>
+              </select>
+              <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"/>
+            </div>
             
             <div className="relative">
               <input 
@@ -197,9 +218,9 @@ function TournamentListContent() {
                 placeholder="대회 검색" 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-48 px-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-[#3182F6] pl-10"
+                className="w-48 px-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#3182F6] focus:ring-2 focus:ring-blue-100 pl-10 transition-all"
               />
-              <Search size={16} className="absolute left-3 top-2.5 text-slate-400"/>
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
             </div>
           </div>
         </div>
