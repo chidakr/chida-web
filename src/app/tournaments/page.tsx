@@ -68,32 +68,9 @@ function TournamentListContent() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-900 flex flex-col">
       
-      <div className="relative pt-32 pb-12 bg-white overflow-hidden border-b border-slate-100">
-         <div className="relative z-10 max-w-7xl mx-auto px-5">
-            <h1 className="text-3xl md:text-4xl font-black mb-3 text-slate-900 tracking-tight">
-               어떤 대회를 <span className="text-[#3182F6]">찾으시나요?</span>
-            </h1>
-            <p className="text-slate-500 font-medium text-lg">
-               원하는 조건으로 검색하고 바로 신청해보세요.
-            </p>
-         </div>
-         <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-blue-50/50 to-transparent pointer-events-none"></div>
-      </div>
-
-      <div className="sticky top-16 left-0 right-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-100 shadow-sm transition-all">
-        <div className="max-w-7xl mx-auto px-5 py-4 space-y-4">
-          
-          <div className="relative w-full max-w-md mx-auto md:mx-0">
-             <input 
-               type="text" 
-               placeholder="대회명, 지역, 주최 검색" 
-               value={searchTerm}
-               onChange={(e) => setSearchTerm(e.target.value)}
-               className="w-full bg-slate-50 px-5 py-3.5 rounded-2xl text-sm outline-none focus:bg-white focus:ring-2 focus:ring-[#3182F6] transition-all pl-11 border border-slate-200 focus:border-transparent placeholder:text-slate-400 shadow-inner"
-             />
-             <Search size={18} className="absolute left-4 top-3.5 text-slate-400"/>
-          </div>
-
+      {/* Category Filter Bar (부트텐트 스타일) */}
+      <div className="sticky top-16 left-0 right-0 z-40 bg-white border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-5 py-3">
           <div className="flex flex-col md:flex-row items-start gap-3">
             
             {/* [필터 1] 카테고리 */}
@@ -210,7 +187,7 @@ function TournamentListContent() {
         {loading ? (
           <div className="text-center py-20 text-slate-400">대회 정보를 불러오는 중... 🎾</div>
         ) : (
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
              {tournaments.length > 0 ? (
                tournaments.map((t) => (
                  <TournamentCard key={t.id} tournament={t} />

@@ -55,16 +55,18 @@ export default function TournamentDetailPage() {
   return (
     <div className="min-h-screen bg-white text-slate-900 pb-32 font-sans">
       
-      {/* 1. 상단 네비게이션 (심플하게) */}
-      <div className="border-b border-slate-100 sticky top-0 bg-white/90 backdrop-blur-sm z-50">
-          <div className="max-w-7xl mx-auto px-5 h-14 flex items-center">
-            <Link href="/tournaments" className="inline-flex items-center gap-1 text-slate-500 hover:text-slate-900 font-bold text-sm transition-colors">
-                <ChevronLeft size={18}/> 목록으로 돌아가기
+      {/* Header는 layout.tsx에서 전역으로 처리됨 */}
+      
+      {/* Breadcrumb */}
+      <div className="border-b border-slate-100 bg-white">
+          <div className="max-w-7xl mx-auto px-5 py-3">
+            <Link href="/tournaments" className="inline-flex items-center gap-1 text-slate-400 hover:text-slate-900 text-sm transition-colors">
+                <ChevronLeft size={16}/> 목록으로 돌아가기
             </Link>
           </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-5 pt-10">
+      <div className="max-w-7xl mx-auto px-5 pt-8">
         <div className="flex flex-col lg:flex-row gap-12 relative">
             
             {/* ================================================= */}
