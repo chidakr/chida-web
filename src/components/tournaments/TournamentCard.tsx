@@ -57,9 +57,9 @@ export default function TournamentCard({ tournament }: { tournament: Tournament 
       : 'bg-slate-400 text-white';
 
   return (
-    <div className="group flex flex-col bg-white rounded-2xl border border-slate-100 overflow-hidden hover:border-slate-200 hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 h-full">
+    <div className="group flex flex-col bg-white rounded-2xl border border-slate-100 overflow-hidden hover:border-slate-200 hover:shadow-2xl hover:shadow-slate-200/40 transition-all duration-300 h-full">
       {/* 이미지 영역 */}
-      <Link href={`/tournaments/${tournament.id}`} className="relative aspect-[4/3] bg-gradient-to-br from-slate-50 to-slate-100 overflow-hidden">
+      <Link href={`/tournaments/${tournament.id}`} className="relative aspect-[3/2] bg-gradient-to-br from-slate-50 to-slate-100 overflow-hidden">
         {tournament.image_url ? (
           <Image
             src={tournament.image_url}
@@ -102,35 +102,35 @@ export default function TournamentCard({ tournament }: { tournament: Tournament 
       </Link>
 
       {/* 텍스트 영역 */}
-      <Link href={`/tournaments/${tournament.id}`} className="p-4 flex flex-col flex-1 gap-3">
+      <Link href={`/tournaments/${tournament.id}`} className="p-5 flex flex-col flex-1 gap-3">
         {/* 레벨 태그 */}
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+          <span className="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">
             {tournament.level || '오픈부'}
           </span>
         </div>
 
         {/* 제목 */}
-        <h3 className="font-semibold text-slate-900 text-sm leading-snug line-clamp-2 group-hover:text-blue-600 transition-colors">
+        <h3 className="font-bold text-slate-900 text-base leading-snug line-clamp-2 group-hover:text-blue-600 transition-colors">
           {tournament.title}
         </h3>
 
         {/* 장소 */}
-        <div className="flex items-center gap-1.5">
-          <MapPin size={13} className="text-slate-400 shrink-0" />
-          <span className="text-xs text-slate-600 line-clamp-1 font-medium">
+        <div className="flex items-center gap-2">
+          <MapPin size={14} className="text-slate-400 shrink-0" />
+          <span className="text-sm text-slate-600 line-clamp-1 font-medium">
             {tournament.location || '장소 미정'}
           </span>
         </div>
 
         {/* 하단 정보 */}
-        <div className="mt-auto pt-3 border-t border-slate-50">
+        <div className="mt-auto pt-4 border-t border-slate-100">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5 text-xs text-slate-500">
-              <Calendar size={12} className="text-slate-400" />
+            <div className="flex items-center gap-2 text-sm text-slate-500">
+              <Calendar size={14} className="text-slate-400" />
               <span className="font-medium">{formattedDate}</span>
             </div>
-            <div className="text-sm font-bold text-slate-900">{formattedFee}</div>
+            <div className="text-base font-bold text-slate-900">{formattedFee}</div>
           </div>
         </div>
       </Link>
