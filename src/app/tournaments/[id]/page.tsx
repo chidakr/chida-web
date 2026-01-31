@@ -128,6 +128,20 @@ export default function TournamentDetailPage() {
   // 🔥 추가: 참가비 포맷
   const formattedFee = formatFee(tournament.fee);
 
+  // 🔥 상태 배지 텍스트
+  const getStatusText = () => {
+    switch (tournament.status) {
+      case 'recruiting':
+        return '🔥 접수중';
+      case 'upcoming':
+        return '⏰ 대회준비중';
+      case 'closed':
+        return '마감';
+      default:
+        return '마감';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white pb-24">
       
@@ -194,7 +208,7 @@ export default function TournamentDetailPage() {
               <Separator orientation="vertical" className="h-3"/>
               <div className="flex items-center gap-1.5 tracking-tight">
                 <MapPin size={15} className="text-slate-400"/>
-                <span>{tournament.location}</span>
+                <span>{tournament.location_detail || tournament.location}</span>
               </div>
               <Separator orientation="vertical" className="h-3"/>
               <div className="flex items-center gap-1.5 tracking-tight">
@@ -331,8 +345,10 @@ export default function TournamentDetailPage() {
                     <div className="flex items-start gap-2.5">
                       <MapPin className="text-blue-600 shrink-0 mt-0.5" size={18}/>
                       <div>
-                        <p className="font-medium text-slate-900 mb-0.5 tracking-tight">{tournament.location}</p>
-                        <p className="text-sm text-slate-500 tracking-tight">경북 대구광역시 북구 대학로 80</p>
+                        <p className="font-medium text-slate-900 mb-0.5 tracking-tight">{tournament.location_detail || tournament.location}</p>
+                        {tournament.location && tournament.location_detail && (
+                          <p className="text-sm text-slate-500 tracking-tight">{tournament.location}</p>
+                        )}
                       </div>
                     </div>
                   </CardContent>
@@ -467,7 +483,7 @@ export default function TournamentDetailPage() {
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between mb-2">
                     <Badge variant={isRecruiting ? "default" : "secondary"} className="text-xs font-medium tracking-tight">
-                      {isRecruiting ? '🔥 접수중' : '마감'}
+                      {getStatusText()}
                     </Badge>
                     <Badge variant="outline" className="text-xs font-medium text-blue-600 tracking-tight">
                       {dDay}
@@ -483,7 +499,7 @@ export default function TournamentDetailPage() {
                 <CardContent className="pt-5 space-y-5">
                   <div className="space-y-2.5">
                     <SidebarInfoRow icon={<Calendar size={15}/>} label="대회일정" value={formatDate(tournament.date)} />
-                    <SidebarInfoRow icon={<MapPin size={15}/>} label="장소" value={tournament.location} />
+                    <SidebarInfoRow icon={<MapPin size={15}/>} label="장소" value={tournament.location_detail || tournament.location} />
                     <SidebarInfoRow icon={<Users size={15}/>} label="모집 팀 수" value={`${tournament.max_participants}팀`} />
                     <SidebarInfoRow icon={<Trophy size={15}/>} label="참가비" value={formattedFee} />
                   </div>

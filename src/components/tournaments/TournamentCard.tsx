@@ -52,10 +52,21 @@ export default function TournamentCard({ tournament }: { tournament: Tournament 
     ? 'bg-gradient-to-r from-red-50 to-orange-50 text-red-600 border border-red-100'
     : 'bg-white/95 text-slate-600 border border-white/50 backdrop-blur-sm';
 
-  const statusBadgeStyle =
-    tournament.status === 'recruiting'
-      ? 'bg-blue-500 text-white'
-      : 'bg-slate-400 text-white';
+  // 🔥 상태 배지 스타일 및 텍스트
+  const getStatusBadge = () => {
+    switch (tournament.status) {
+      case 'recruiting':
+        return { style: 'bg-blue-500 text-white', text: '모집중' };
+      case 'upcoming':
+        return { style: 'bg-amber-500 text-white', text: '대회준비중' };
+      case 'closed':
+        return { style: 'bg-slate-400 text-white', text: '마감' };
+      default:
+        return { style: 'bg-slate-400 text-white', text: '마감' };
+    }
+  };
+
+  const statusBadge = getStatusBadge();
 
   return (
     <div className="group flex flex-col bg-white rounded-2xl border border-slate-100 overflow-hidden hover:border-slate-200 hover:shadow-2xl hover:shadow-slate-200/40 transition-all duration-300 h-full">
@@ -80,8 +91,8 @@ export default function TournamentCard({ tournament }: { tournament: Tournament 
         )}
 
         {/* 북마크 버튼 오버레이 - 우측 상단 */}
-        <div 
-          className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200" 
+        <div
+          className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -92,8 +103,8 @@ export default function TournamentCard({ tournament }: { tournament: Tournament 
 
         {/* 상태 뱃지 - 좌측 상단 */}
         <div className="absolute top-3 left-3">
-          <span className={`px-2.5 py-1 text-[10px] font-semibold rounded-full ${statusBadgeStyle} shadow-sm`}>
-            {tournament.status === 'recruiting' ? '모집중' : '마감'}
+          <span className={`px-2.5 py-1 text-[10px] font-semibold rounded-full ${statusBadge.style} shadow-sm`}>
+            {statusBadge.text}
           </span>
         </div>
 
@@ -126,7 +137,7 @@ export default function TournamentCard({ tournament }: { tournament: Tournament 
         <div className="flex items-center gap-2">
           <MapPin size={14} className="text-slate-400 shrink-0" />
           <span className="text-sm text-slate-600 line-clamp-1 font-medium">
-            {tournament.location || '장소 미정'}
+            {tournament.location_detail || tournament.location || '장소 미정'}
           </span>
         </div>
 
