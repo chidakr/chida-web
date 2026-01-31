@@ -82,23 +82,57 @@ export default function TournamentDetailPage() {
     async function fetchTournament() {
       if (!id) return;
 
-      const { data, error } = await supabase
-        .from('tournaments')
-        .select(`
-          *,
-          tournament_divisions (
-            id, name, date_start, time_start, fee, capacity, current_participants, status, description
-          )
-        `)
-        .eq('id', id)
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from('tournaments')
+          .select(`
+            *,
+            tournament_divisions (
+              id,
+              name,
+              date_start,
+              time_start,
+              fee,
+              capacity,
+              current_participants,
+              status,
+              description,
+              location
+            )
+          `)
+          .eq('id', id)
+          .single();
 
-      if (error) {
-        console.error('❌ 대회 정보를 불러오지 못했습니다:', error);
-      } else {
-        setTournament(data);
+        if (error) {
+          console.error('❌ Supabase 쿼리 에러:', JSON.stringify(error, null, 2));
+          console.error('   에러 코드:', error.code);
+          console.error('   에러 메시지:', error.message);
+          console.error('   요청한 ID:', id);
+        } else {
+          console.log('✅ 대회 데이터 로드 완료');
+          console.log('📊 Tournament:', {
+            id: data?.id,
+            title: data?.title,
+            divisions_count: data?.tournament_divisions?.length || 0
+          });
+
+          // 부서별 일정 상세 로그
+          if (data?.tournament_divisions && Array.isArray(data.tournament_divisions)) {
+            console.log('📋 부서별 일정:');
+            data.tournament_divisions.forEach((div: any, idx: number) => {
+              console.log(`   [${idx + 1}] ${div.name} | ${div.date_start} | ${div.time_start || '09:00'}`);
+            });
+          } else {
+            console.warn('⚠️ tournament_divisions가 비어있거나 배열이 아닙니다.');
+          }
+
+          setTournament(data);
+        }
+      } catch (err) {
+        console.error('❌ 예외 발생:', err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     fetchTournament();
   }, [id, supabase]);
@@ -135,8 +169,10 @@ export default function TournamentDetailPage() {
 
   const dDay = getDday(tournament.date);
   const isRecruiting = tournament.status === 'recruiting';
-  const divisions = tournament.tournament_divisions || [];
-  const minFee = divisions.length > 0 
+  const isUpcoming = tournament.status === 'upcoming';
+  const isClosed = !isRecruiting && !isUpcoming;
+  const divisions = Array.isArray(tournament.tournament_divisions) ? tournament.tournament_divisions : [];
+  const minFee = divisions.length > 0
     ? Math.min(...divisions.map((d: any) => d.fee).filter((f: number) => f > 0))
     : tournament.fee;
 
@@ -190,19 +226,39 @@ export default function TournamentDetailPage() {
                       <Trophy size={48} className="mb-2 opacity-10" />
                    </div>
                  )}
+                 
+                 {/* 🔥 [UI FIX] 상세페이지 배지 - TournamentCard와 동일 디자인 (화이트 배경) */}
                  <div className="absolute top-4 left-4 flex gap-2">
-                    <div className="flex items-center gap-2 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm border border-white/50">
-                        <span className={`w-1.5 h-1.5 rounded-full ${isRecruiting ? 'bg-green-500' : 'bg-slate-400'}`}></span>
-                        <span className="text-xs font-bold text-slate-800 tracking-tight">
-                            {isRecruiting ? '접수중' : '마감'}
-                        </span>
-                        {isRecruiting && dDay && (
-                            <>
-                                <div className="w-px h-3 bg-slate-200"></div>
-                                <span className="text-xs font-bold text-rose-500 tracking-tight">{dDay}</span>
-                            </>
-                        )}
-                    </div>
+                    {/* 모집중 */}
+                    {isRecruiting && (
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/95 border border-slate-200 shadow-sm backdrop-blur-sm">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.4)]" />
+                        <span className="text-xs font-bold text-slate-800 tracking-tight">접수중</span>
+                      </div>
+                    )}
+                    
+                    {/* 준비중: 배경 화이트로 통일 */}
+                    {isUpcoming && (
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/95 border border-slate-200 shadow-sm backdrop-blur-sm">
+                        <div className="w-1.5 h-1.5 rounded-full bg-orange-400" />
+                        <span className="text-xs font-bold text-slate-800 tracking-tight">대회준비중</span>
+                      </div>
+                    )}
+
+                    {/* 마감 */}
+                    {isClosed && (
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/95 border border-slate-200 shadow-sm backdrop-blur-sm">
+                        <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                        <span className="text-xs font-medium text-slate-500 tracking-tight">마감</span>
+                      </div>
+                    )}
+
+                    {/* D-Day */}
+                    {isRecruiting && dDay && (
+                      <div className="px-3 py-1.5 rounded-full text-xs font-bold bg-white/95 border border-blue-100 text-blue-600 shadow-sm backdrop-blur-sm">
+                        {dDay}
+                      </div>
+                    )}
                  </div>
               </div>
 
@@ -247,7 +303,7 @@ export default function TournamentDetailPage() {
                         <div>
                             <p className="text-xs text-slate-400 font-medium mb-1">장소</p>
                             <p className="text-sm font-bold text-slate-900 break-keep leading-snug tracking-tight">
-                                {tournament.location}
+                                {tournament.location_detail || tournament.location_city || tournament.location}
                             </p>
                         </div>
                     </div>
@@ -322,26 +378,32 @@ export default function TournamentDetailPage() {
                         <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
                             <Clock size={20} className="text-slate-400"/> 부서별 일정
                         </h3>
-                        {divisions.length > 0 ? (
+                        {divisions && divisions.length > 0 ? (
                             <div className="space-y-3">
-                                {divisions.map((div: any) => (
-                                    <div key={div.id} className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-100 shadow-sm">
-                                        <div>
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <span className="font-bold text-slate-900">{div.name}</span>
+                                {divisions.map((div: any, idx: number) => (
+                                    <div key={div.id || idx} className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-100 shadow-sm hover:border-slate-200 transition-colors">
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2 mb-1.5">
+                                                <span className="font-bold text-slate-900 text-base">{div.name || '미정'}</span>
                                             </div>
                                             <div className="text-sm text-slate-500 flex items-center gap-1.5">
-                                                <Calendar size={13}/> {formatDate(div.date_start)}
+                                                <Calendar size={14}/>
+                                                <span className="font-medium">{div.date_start ? formatDate(div.date_start) : '미정'}</span>
                                             </div>
                                         </div>
-                                        <div className="text-right">
-                                            <span className="block text-lg font-bold text-slate-900 tracking-tight">{div.time_start?.substring(0,5) || '09:00'}</span>
+                                        <div className="text-right ml-4">
+                                            <span className="block text-xl font-bold text-slate-900 tracking-tight">
+                                              {div.time_start?.substring(0,5) || '09:00'}
+                                            </span>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         ) : (
-                            <div className="p-6 text-center text-slate-400 bg-slate-50 rounded-xl">일정이 없습니다.</div>
+                            <div className="p-8 text-center bg-slate-50 rounded-xl border border-slate-100">
+                              <p className="text-slate-400 font-medium mb-2">일정이 등록되지 않았습니다.</p>
+                              <p className="text-xs text-slate-400">부서별 일정은 관리자가 등록한 후 표시됩니다.</p>
+                            </div>
                         )}
                     </section>
 
@@ -473,7 +535,12 @@ export default function TournamentDetailPage() {
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-6">
-                            <p className="font-bold text-slate-900 mb-1 text-lg leading-snug">{tournament.location_detail || tournament.location}</p>
+                            <p className="font-bold text-slate-900 mb-1 text-lg leading-snug">
+                              {tournament.location_detail || tournament.location_city || tournament.location}
+                            </p>
+                            {tournament.location_detail && (tournament.location_city || tournament.location) && (
+                              <p className="text-sm text-slate-500 mt-1">{tournament.location_city || tournament.location}</p>
+                            )}
                             <div className="w-full h-56 bg-slate-50 rounded-lg flex items-center justify-center text-slate-300 text-sm border border-slate-100 mt-4">
                                 지도 API 연동 영역
                             </div>
@@ -493,11 +560,32 @@ export default function TournamentDetailPage() {
                 <Card className="border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden rounded-2xl">
                    <div className="p-6">
                       <div className="mb-6">
+                         {/* 🔥 [UI FIX] 사이드바 배지 디자인 복원 (화이트 배경 + 점) */}
                          <div className="flex items-center gap-2 mb-2">
-                            <span className={`w-2 h-2 rounded-full ${isRecruiting ? 'bg-green-500' : 'bg-slate-300'}`}></span>
-                            <span className="text-sm font-bold text-slate-900">{isRecruiting ? '접수중' : '접수마감'}</span>
+                            {/* 모집중 */}
+                            {isRecruiting && (
+                              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-slate-200 shadow-sm">
+                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.4)]" />
+                                <span className="text-xs font-bold text-slate-800">접수중</span>
+                              </span>
+                            )}
+                            {/* 준비중 (배경 화이트) */}
+                            {isUpcoming && (
+                              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-slate-200 shadow-sm">
+                                <div className="w-1.5 h-1.5 rounded-full bg-orange-400" />
+                                <span className="text-xs font-bold text-slate-800">대회준비중</span>
+                              </span>
+                            )}
+                            {/* 마감 */}
+                            {isClosed && (
+                              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-slate-200 shadow-sm">
+                                <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                                <span className="text-xs font-medium text-slate-500">마감</span>
+                              </span>
+                            )}
+
                             {isRecruiting && dDay && (
-                                <span className="text-sm font-bold text-rose-500 ml-auto">{dDay}</span>
+                                <span className="text-sm font-bold text-blue-600 ml-auto">{dDay}</span>
                             )}
                          </div>
                          <h3 className="text-lg font-bold leading-snug break-keep text-slate-900">{tournament.title}</h3>
@@ -513,7 +601,7 @@ export default function TournamentDetailPage() {
                          <div className="flex justify-between items-start text-sm">
                             <span className="text-slate-500 shrink-0">장소</span>
                             <span className="text-slate-900 font-medium text-right flex-1 pl-4 break-keep">
-                                {tournament.location}
+                                {tournament.location_detail || tournament.location_city || tournament.location}
                             </span>
                          </div>
                       </div>
@@ -532,7 +620,7 @@ export default function TournamentDetailPage() {
                                 isRecruiting ? 'bg-[#3182F6] hover:bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'
                               }`}
                             >
-                               {isRecruiting ? '참가 신청하기' : '접수 마감'}
+                               {isRecruiting ? '참가 신청하기' : isUpcoming ? '대회 준비중' : '접수 마감'}
                             </Button>
                          )}
 
@@ -585,7 +673,7 @@ export default function TournamentDetailPage() {
                </Button>
             ) : (
                <Button disabled={!isRecruiting} size="lg" className={`flex-1 font-bold h-12 rounded-xl ${isRecruiting ? 'bg-[#3182F6] text-white' : 'bg-slate-100 text-slate-400'}`}>
-                  {isRecruiting ? '참가 신청' : '마감'}
+                  {isRecruiting ? '참가 신청' : isUpcoming ? '대회 준비중' : '마감'}
                </Button>
             )}
         </div>

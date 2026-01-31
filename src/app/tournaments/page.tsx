@@ -115,9 +115,11 @@ function TournamentListContent() {
     if (selectedLocations.includes(loc)) setSelectedLocations(selectedLocations.filter(l => l !== loc));
     else setSelectedLocations([...selectedLocations, loc]);
   };
-  const toggleAllLocations = () => {
-    if (selectedLocations.length === LOCATIONS.length) setSelectedLocations([]);
-    else setSelectedLocations([...LOCATIONS]);
+
+  // 전체 선택 = 모든 필터 해제 + 드롭다운 닫기
+  const handleSelectAll = () => {
+    setSelectedLocations([]);
+    setIsLocationOpen(false);
   };
 
   return (
@@ -218,64 +220,54 @@ function TournamentListContent() {
               </Button>
 
               {isLocationOpen && (
-                <div className="absolute top-full left-0 mt-2 w-[400px] bg-white rounded-xl shadow-2xl border border-slate-200 p-5 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute top-full left-0 mt-2 w-[340px] bg-white rounded-xl shadow-2xl border border-slate-200 p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                     {/* 헤더 */}
-                    <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
+                    <div className="flex justify-between items-center mb-3 pb-2.5 border-b border-slate-100">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-bold text-slate-900">지역 선택</span>
                           {selectedLocations.length > 0 && (
                             <span className="text-xs text-blue-600 font-semibold">
-                              {selectedLocations.length}개 선택됨
+                              {selectedLocations.length}개
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-2">
-                          {selectedLocations.length > 0 && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => setSelectedLocations([])}
-                              className="h-7 text-xs"
-                            >
-                              초기화
-                            </Button>
-                          )}
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={toggleAllLocations}
-                            className="h-7 text-xs"
+                        {selectedLocations.length > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedLocations([])}
+                            className="h-6 text-xs px-2"
                           >
-                            {selectedLocations.length === LOCATIONS.length ? '전체 해제' : '전체 선택'}
+                            초기화
                           </Button>
-                        </div>
+                        )}
                     </div>
-                    
-                    {/* 체크박스 리스트 */}
-                    <div className="max-h-[320px] overflow-y-auto space-y-1">
+
+                    {/* 체크박스 그리드 - 3열 레이아웃 */}
+                    <div className="grid grid-cols-3 gap-1.5 mb-3">
                       {LOCATIONS.map((loc) => {
                         const isSelected = selectedLocations.includes(loc);
                         return (
                           <div
                             key={loc}
                             onClick={() => toggleLocation(loc)}
-                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all ${
-                              isSelected 
-                                ? 'bg-blue-50 hover:bg-blue-100' 
+                            className={`flex items-center gap-2 px-2.5 py-2 rounded-lg cursor-pointer transition-all ${
+                              isSelected
+                                ? 'bg-blue-50 hover:bg-blue-100'
                                 : 'hover:bg-slate-50'
                             }`}
                           >
                             {/* 커스텀 체크박스 */}
                             <div className={`flex items-center justify-center w-5 h-5 rounded border-2 transition-all ${
-                              isSelected 
-                                ? 'bg-blue-500 border-blue-500' 
+                              isSelected
+                                ? 'bg-blue-500 border-blue-500'
                                 : 'bg-white border-slate-300'
                             }`}>
                               {isSelected && (
                                 <Check size={14} className="text-white" strokeWidth={3} />
                               )}
                             </div>
-                            
+
                             {/* 지역명 */}
                             <span className={`text-sm font-medium transition-colors ${
                               isSelected ? 'text-blue-700' : 'text-slate-700'
@@ -285,6 +277,23 @@ function TournamentListContent() {
                           </div>
                         );
                       })}
+                    </div>
+
+                    {/* 전체 선택 - 맨 아래 배치 (왼쪽 정렬, 체크박스 형태) */}
+                    <div className="pt-3 border-t border-slate-100">
+                      <div
+                        onClick={handleSelectAll}
+                        className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg cursor-pointer transition-all hover:bg-slate-50"
+                      >
+                        {/* 체크박스 - 항상 unchecked 상태 */}
+                        <div className="flex items-center justify-center w-5 h-5 rounded border-2 bg-white border-slate-300 transition-all">
+                        </div>
+
+                        {/* 텍스트 */}
+                        <span className="text-sm font-semibold text-slate-700">
+                          전체 선택
+                        </span>
+                      </div>
                     </div>
                 </div>
               )}
@@ -302,35 +311,18 @@ function TournamentListContent() {
             )}
           </div>
 
-          {/* Active Filter Chips (선택된 필터 표시) */}
-          {((filterMain !== '카테고리 선택' && filterMain !== '전체 보기') || selectedLocations.length > 0) && (
+          {/* Active Filter Chips (선택된 필터 표시) - 카테고리만 */}
+          {filterSub && (
             <div className="flex items-center gap-2 mt-3 pt-3">
-              {filterSub && (
-                <Badge variant="default" className="gap-1.5">
-                  <span>{filterSub}</span>
-                  <button
-                    onClick={() => setFilterSub('')}
-                    className="hover:bg-primary/80 rounded-full p-0.5 transition-colors"
-                  >
-                    <X size={12} />
-                  </button>
-                </Badge>
-              )}
-              {selectedLocations.map((loc) => (
-                <Badge
-                  key={loc}
-                  variant="secondary"
-                  className="gap-1.5"
+              <Badge variant="default" className="gap-1.5">
+                <span>{filterSub}</span>
+                <button
+                  onClick={() => setFilterSub('')}
+                  className="hover:bg-primary/80 rounded-full p-0.5 transition-colors"
                 >
-                  <span>{loc}</span>
-                  <button
-                    onClick={() => toggleLocation(loc)}
-                    className="hover:bg-secondary/80 rounded-full p-0.5 transition-colors"
-                  >
-                    <X size={12} />
-                  </button>
-                </Badge>
-              ))}
+                  <X size={12} />
+                </button>
+              </Badge>
             </div>
           )}
 

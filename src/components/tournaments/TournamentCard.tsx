@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { Calendar, MapPin, Trophy, ExternalLink, Clock } from 'lucide-react';
 import type { Tournament } from '@/types';
 import { BookmarkButton } from './index';
+import { parseLocation } from '@/lib/utils';
 
 export default function TournamentCard({ tournament }: { tournament: Tournament }) {
   if (!tournament) return null;
@@ -34,43 +35,18 @@ export default function TournamentCard({ tournament }: { tournament: Tournament 
   const dDay = getDday(tournament.date);
   const formattedDate = formatDate(tournament.date);
 
-  // 🔥 참가비 포맷: fee가 없거나 0이면 '문의' 표시
-  const formattedFee = tournament.fee && Number(tournament.fee) > 0
-    ? `${Number(tournament.fee).toLocaleString()}원`
-    : '문의';
+  const { region, detail } = parseLocation(tournament.location, tournament.location_detail);
 
-  const isExternal = !!tournament.site_url;
-  const current = tournament.current_participants || 0;
-  const max = tournament.max_participants || 32;
-  const percent = Math.min((current / max) * 100, 100);
+  const isRecruiting = tournament.status === 'recruiting';
+  const isUpcoming = tournament.status === 'upcoming';
+  const isClosed = !isRecruiting && !isUpcoming;
 
   const isUrgent =
     dDay === '오늘마감' ||
     (typeof dDay === 'string' && dDay.startsWith('D-') && parseInt(dDay.split('-')[1]) <= 3);
 
-  const dDayBadgeStyle = isUrgent
-    ? 'bg-gradient-to-r from-red-50 to-orange-50 text-red-600 border border-red-100'
-    : 'bg-white/95 text-slate-600 border border-white/50 backdrop-blur-sm';
-
-  // 🔥 상태 배지 스타일 및 텍스트
-  const getStatusBadge = () => {
-    switch (tournament.status) {
-      case 'recruiting':
-        return { style: 'bg-blue-500 text-white', text: '모집중' };
-      case 'upcoming':
-        return { style: 'bg-amber-500 text-white', text: '대회준비중' };
-      case 'closed':
-        return { style: 'bg-slate-400 text-white', text: '마감' };
-      default:
-        return { style: 'bg-slate-400 text-white', text: '마감' };
-    }
-  };
-
-  const statusBadge = getStatusBadge();
-
   return (
     <div className="group flex flex-col bg-white rounded-2xl border border-slate-100 overflow-hidden hover:border-slate-200 hover:shadow-2xl hover:shadow-slate-200/40 transition-all duration-300 h-full">
-      {/* 이미지 영역 */}
       <Link href={`/tournaments/${tournament.id}`} className="relative aspect-[4/3] bg-gradient-to-br from-slate-50 to-slate-100 overflow-hidden">
         {(tournament.thumbnail_url || tournament.image_url) ? (
           <Image
@@ -90,7 +66,6 @@ export default function TournamentCard({ tournament }: { tournament: Tournament 
           </div>
         )}
 
-        {/* 북마크 버튼 오버레이 - 우측 상단 */}
         <div
           className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
           onClick={(e) => {
@@ -101,54 +76,83 @@ export default function TournamentCard({ tournament }: { tournament: Tournament 
           <BookmarkButton tournamentId={tournament.id} />
         </div>
 
-        {/* 상태 뱃지 - 좌측 상단 */}
-        <div className="absolute top-3 left-3">
-          <span className={`px-2.5 py-1 text-[10px] font-semibold rounded-full ${statusBadge.style} shadow-sm`}>
-            {statusBadge.text}
-          </span>
-        </div>
+        {/* 🔥 [UI FIX] 배지 디자인: 배경은 모두 화이트로 통일, 점(Dot) 색상으로 구분 */}
+        <div className="absolute top-3 left-3 flex gap-1.5">
+          
+          {/* 1. 접수중: 녹색 점 */}
+          {isRecruiting && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/95 border border-slate-100 shadow-sm backdrop-blur-sm">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.4)]" />
+              <span className="text-xs font-bold text-slate-800 tracking-tight">접수중</span>
+            </div>
+          )}
 
-        {/* D-Day 뱃지 */}
-        {tournament.status === 'recruiting' && (
-          <div className="absolute bottom-3 left-3">
-            <span className={`px-2.5 py-1 text-[10px] rounded-full flex items-center gap-1 ${dDayBadgeStyle} shadow-sm font-semibold`}>
-              {isUrgent && <Clock size={9} />}
+          {/* 2. 준비중: 주황 점 (배경색 제거 -> 깔끔함 UP) */}
+          {isUpcoming && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/95 border border-slate-100 shadow-sm backdrop-blur-sm">
+              <div className="w-1.5 h-1.5 rounded-full bg-orange-400" />
+              <span className="text-xs font-bold text-slate-800 tracking-tight">대회준비중</span>
+            </div>
+          )}
+
+          {/* 3. 마감: 회색 점 */}
+          {isClosed && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/95 border border-slate-100 shadow-sm backdrop-blur-sm">
+              <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+              <span className="text-xs font-medium text-slate-500 tracking-tight">마감</span>
+            </div>
+          )}
+
+          {/* D-Day 뱃지 */}
+          {isRecruiting && dDay && (
+            <div className={`px-2.5 py-1 rounded-full text-xs font-bold shadow-sm backdrop-blur-sm flex items-center bg-white/95 border ${isUrgent ? 'border-red-100 text-red-600' : 'border-blue-100 text-blue-600'}`}>
               {dDay}
-            </span>
-          </div>
-        )}
+            </div>
+          )}
+        </div>
       </Link>
 
-      {/* 텍스트 영역 */}
       <Link href={`/tournaments/${tournament.id}`} className="p-5 flex flex-col flex-1 gap-3">
-        {/* 레벨 태그 */}
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">
+          <span className="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">
             {tournament.level || '오픈부'}
           </span>
         </div>
 
-        {/* 제목 */}
-        <h3 className="font-bold text-slate-900 text-base leading-snug line-clamp-2 group-hover:text-blue-600 transition-colors">
+        <h3 className="font-bold text-slate-900 text-base leading-snug line-clamp-2 group-hover:text-blue-600 transition-colors break-keep">
           {tournament.title}
         </h3>
 
-        {/* 장소 */}
-        <div className="flex items-center gap-2">
-          <MapPin size={14} className="text-slate-400 shrink-0" />
-          <span className="text-sm text-slate-600 line-clamp-1 font-medium">
-            {tournament.location_detail || tournament.location || '장소 미정'}
-          </span>
+        <div className="flex items-start gap-2">
+          <MapPin size={14} className="text-slate-400 shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <div className="font-bold text-slate-900 text-sm">{region}</div>
+            {detail && (
+              <div className="text-xs text-slate-500 line-clamp-1 mt-0.5">{detail}</div>
+            )}
+          </div>
         </div>
 
-        {/* 하단 정보 */}
         <div className="mt-auto pt-4 border-t border-slate-100">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm text-slate-500">
               <Calendar size={14} className="text-slate-400" />
               <span className="font-medium">{formattedDate}</span>
             </div>
-            <div className="text-base font-bold text-slate-900">{formattedFee}</div>
+            {tournament.fee && Number(tournament.fee) > 0 ? (
+              <div className="flex items-baseline gap-0.5">
+                <span className="text-xs text-gray-500">참가비</span>
+                <span className="text-lg font-extrabold text-gray-900 ml-1">
+                  {Number(tournament.fee).toLocaleString()}
+                </span>
+                <span className="text-xs text-gray-500">원</span>
+              </div>
+            ) : (
+              <div className="flex items-baseline gap-0.5">
+                <span className="text-xs text-gray-500">참가비</span>
+                <span className="text-base font-bold text-gray-900 ml-1">문의</span>
+              </div>
+            )}
           </div>
         </div>
       </Link>
