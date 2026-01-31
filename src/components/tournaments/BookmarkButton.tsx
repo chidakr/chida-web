@@ -8,9 +8,10 @@ import toast from 'react-hot-toast';
 interface BookmarkButtonProps {
   tournamentId: string;
   variant?: 'default' | 'outline';
+  className?: string;
 }
 
-export default function BookmarkButton({ tournamentId, variant = 'default' }: BookmarkButtonProps) {
+export default function BookmarkButton({ tournamentId, variant = 'default', className = '' }: BookmarkButtonProps) {
   const supabase = createClient();
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -75,20 +76,23 @@ export default function BookmarkButton({ tournamentId, variant = 'default' }: Bo
     setLoading(false);
   };
 
-  // 스타일 variant
+  // 스타일 variant (높이는 className prop으로 외부 제어 가능)
   const baseStyles = variant === 'outline'
-    ? 'w-full h-10 flex items-center justify-center gap-2 border rounded-lg font-medium text-sm transition-all active:scale-95 tracking-tight'
-    : 'w-8 h-8 flex items-center justify-center rounded-lg transition-all hover:scale-110 active:scale-95 backdrop-blur-sm';
+    ? 'flex items-center justify-center gap-2 border rounded-lg font-medium text-sm transition-all active:scale-95 tracking-tight'
+    : 'flex items-center justify-center rounded-lg transition-all active:scale-95';
 
   const activeStyles = variant === 'outline'
     ? isBookmarked
       ? 'border-blue-500 bg-blue-50 text-blue-600'
       : 'border-slate-200 text-slate-600 hover:bg-slate-50'
     : isBookmarked
-      ? 'bg-white/90 text-blue-600'
-      : 'bg-white/70 text-slate-400 hover:text-slate-700 hover:bg-white/90';
+      ? 'text-blue-600'
+      : 'text-slate-600 hover:text-slate-900';
 
-  const iconSize = variant === 'outline' ? 16 : 18;
+  // className이 없으면 기본 크기 적용
+  const sizeStyles = className || (variant === 'outline' ? 'w-full h-10' : 'w-8 h-8');
+
+  const iconSize = variant === 'outline' ? 16 : 20;
 
   return (
     <button
@@ -98,7 +102,7 @@ export default function BookmarkButton({ tournamentId, variant = 'default' }: Bo
         toggleBookmark();
       }}
       disabled={loading}
-      className={`${baseStyles} ${activeStyles}`}
+      className={`${baseStyles} ${activeStyles} ${sizeStyles}`}
     >
       <Bookmark
         size={iconSize}

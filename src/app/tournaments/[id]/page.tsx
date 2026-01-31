@@ -5,602 +5,592 @@ import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
-import type { Tournament } from '@/types';
 import {
-  ChevronLeft, Calendar, MapPin, Users, Share2, Bookmark, Trophy,
-  CheckCircle2, Clock, ExternalLink, AlertCircle, Copy, Check
+  ChevronLeft, Calendar, MapPin, Share2, Trophy,
+  Clock, Phone, AlertCircle, Copy, Check, CreditCard,
+  Siren, ExternalLink, Info, Youtube, Building2, User
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { BookmarkButton } from '@/components/tournaments';
+import Footer from '@/components/layout/Footer';
 
-// Mock Data (테스트용) - 유효한 UUID 사용
-const MOCK_TOURNAMENT = {
-  id: '00000000-0000-0000-0000-000000000001',
-  title: "제5회 Kim's 전국동호인테니스대회",
-  status: 'recruiting',
-  date: '2026-03-07',
-  location: '경북대학교 테니스장',
-  category: '일반',
-  max_participants: 32,
-  current_participants: 8,
-  thumbnail_url: '/images/kato-groupa.png',
-  registration_link: '',
-  description: '전국 동호인 테니스 대회를 개최합니다.',
-  divisions: ['개나리부', '국화부', '챌린저부', '마스터스부'],
-  prizes: [
-    { rank: '우승 (1위)', reward: '상금 100만원 + 상패' },
-    { rank: '준우승 (2위)', reward: '상금 60만원 + 상패' },
-    { rank: '3위', reward: '상금 40만원 + 상패' }
+// ----------------------------------------------------------------------
+// [UTILS] 날짜 및 포맷팅
+// ----------------------------------------------------------------------
+const formatDate = (dateString: string) => {
+  if (!dateString) return '미정';
+  const date = new Date(dateString);
+  const days = ['일', '월', '화', '수', '목', '금', '토'];
+  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')} (${days[date.getDay()]})`;
+};
+
+const getDday = (dateString: string) => {
+  if (!dateString) return '';
+  const today = new Date();
+  const target = new Date(dateString);
+  target.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
+  const diff = target.getTime() - today.getTime();
+  const dDay = Math.ceil(diff / (1000 * 60 * 60 * 24));
+  return dDay < 0 ? '종료' : (dDay === 0 ? '오늘마감' : `D-${dDay}`);
+};
+
+const formatFee = (fee: number | null | undefined) => {
+  if (!fee || fee === 0) return '문의';
+  return `${Number(fee).toLocaleString()}`;
+};
+
+// 🔥 [DATA] 보내주신 리얼 데이터 하드코딩 (DB 연동 전 시각화용)
+const REAL_DATA = {
+  host: "Kim's Tennis, (사)한국테니스발전협의회",
+  sponsor: "경상북도테니스협회, 대구광역시북구테니스협회, 포항시테니스협회, 청도군테니스협회, Team GA-STAR, 늘시원한위대항병원, 대영이엔지, 우드림, 삼겹길",
+  ball: "낫소 짜르투어테니스볼",
+  refund: "2026년 2월 27일(금) 15시 마감. 이후 환불불가",
+  live: "테니스라이브 YouTube 실시간 중계 (4일간)",
+  accounts: [
+    { name: "개나리부", bank: "국민은행", number: "028202-04-083663", owner: "김경섭" },
+    { name: "지도자부", bank: "카카오뱅크", number: "3333-25-4640407", owner: "김경섭" },
+    { name: "국화부", bank: "기업은행", number: "545-005715-01-026", owner: "김경섭" },
+    { name: "혼합복식부", bank: "국민은행", number: "028202-04-083663", owner: "김경섭" },
+    { name: "마스터스부", bank: "기업은행", number: "545-005715-01-026", owner: "김경섭" },
+    { name: "부부", bank: "카카오뱅크", number: "3333-25-4640407", owner: "김경섭" },
+    { name: "챌린저부", bank: "기업은행", number: "545-005715-01-033", owner: "김경섭" },
   ],
-  schedule: [
-    { date: '2026.03.07 (토)', division: '개나리부 / 국화부', time: '오전 09:00' },
-    { date: '2026.03.08 (일)', division: '챌린저부 / 마스터스부', time: '오전 09:00' }
-  ],
-  account: '국민은행 000-000-000000',
-  accountHolder: '김테니스'
+  contacts: [
+    { role: "전부서", name: "김경섭", phone: "010-2227-1731" },
+    { role: "지도자부", name: "이준석", phone: "010-5800-8635" },
+    { role: "참가자격문의", name: "KATO사무국", phone: "02-401-7979" },
+  ]
 };
 
 export default function TournamentDetailPage() {
   const { id } = useParams();
   const router = useRouter();
   const supabase = createClient();
+  
   const [tournament, setTournament] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<string | null>(null); // 복사된 계좌번호 추적
   const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
     async function fetchTournament() {
       if (!id) return;
 
-      const { data, error } = await supabase.from('tournaments').select('*').eq('id', id).single();
+      const { data, error } = await supabase
+        .from('tournaments')
+        .select(`
+          *,
+          tournament_divisions (
+            id, name, date_start, time_start, fee, capacity, current_participants, status, description
+          )
+        `)
+        .eq('id', id)
+        .single();
 
-      if (error || !data) {
-        console.log('⚠️ DB에 데이터가 없어 Mock Data를 사용합니다');
-        setTournament(MOCK_TOURNAMENT);
+      if (error) {
+        console.error('❌ 대회 정보를 불러오지 못했습니다:', error);
       } else {
-        // JSON 문자열로 저장된 필드들을 파싱
-        const parsedData = {
-          ...data,
-          divisions: typeof data.divisions === 'string' ? JSON.parse(data.divisions) : data.divisions,
-          prizes: typeof data.prizes === 'string' ? JSON.parse(data.prizes) : data.prizes,
-          schedule: typeof data.schedule === 'string' ? JSON.parse(data.schedule) : data.schedule,
-        };
-        setTournament(parsedData);
+        setTournament(data);
       }
-
       setLoading(false);
     }
     fetchTournament();
-  }, [id, router, supabase]);
+  }, [id, supabase]);
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const days = ['일', '월', '화', '수', '목', '금', '토'];
-    return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')} (${days[date.getDay()]})`;
+  const handleCopy = (text: string, key: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(key);
+    setTimeout(() => setCopied(null), 2000);
   };
 
-  const getDday = (dateString: string) => {
-    const today = new Date();
-    const target = new Date(dateString);
-    const diff = target.getTime() - today.getTime();
-    const dDay = Math.ceil(diff / (1000 * 60 * 60 * 24));
-    return dDay < 0 ? '종료' : (dDay === 0 ? '오늘마감' : `D-${dDay}`);
-  };
-
-  // 🔥 추가: 참가비 포맷팅 함수
-  const formatFee = (fee: number | null | undefined) => {
-    if (!fee || fee === 0) {
-      return '문의';
-    }
-    return `${Number(fee).toLocaleString()}원`;
-  };
-
-  const handleCopyAccount = () => {
-    if (tournament?.account) {
-      navigator.clipboard.writeText(tournament.account);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+  const handleShare = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      alert('링크가 복사되었습니다!');
+    } catch (err) {
+      console.error('공유 실패', err);
     }
   };
 
   if (loading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center bg-white">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500 mx-auto mb-3"></div>
-          <p className="text-slate-500 text-sm tracking-tight">대회 정보를 불러오는 중...</p>
-        </div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900"></div>
       </div>
     );
   }
   
-  if (!tournament) return null;
+  if (!tournament) return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-white gap-4">
+      <p className="text-slate-500 font-medium">대회 정보를 찾을 수 없습니다.</p>
+      <Button variant="outline" onClick={() => router.back()}>뒤로 가기</Button>
+    </div>
+  );
 
   const dDay = getDday(tournament.date);
   const isRecruiting = tournament.status === 'recruiting';
-
-  // 🔥 추가: 참가비 포맷
-  const formattedFee = formatFee(tournament.fee);
-
-  // 🔥 상태 배지 텍스트
-  const getStatusText = () => {
-    switch (tournament.status) {
-      case 'recruiting':
-        return '🔥 접수중';
-      case 'upcoming':
-        return '⏰ 대회준비중';
-      case 'closed':
-        return '마감';
-      default:
-        return '마감';
-    }
-  };
+  const divisions = tournament.tournament_divisions || [];
+  const minFee = divisions.length > 0 
+    ? Math.min(...divisions.map((d: any) => d.fee).filter((f: number) => f > 0))
+    : tournament.fee;
 
   return (
-    <div className="min-h-screen bg-white pb-24">
+    <div className="min-h-screen bg-white pb-24 md:pb-0 font-sans text-slate-900">
       
-      {/* Breadcrumb */}
-      <div className="border-b border-slate-100 bg-white/95 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-6 py-3">
-          <Link href="/tournaments" className="inline-flex items-center gap-1 text-slate-500 hover:text-slate-900 text-sm transition-colors tracking-tight">
-            <ChevronLeft size={16}/> 대회 목록
-          </Link>
+      {/* 1. Mobile Header */}
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-slate-100 px-4 h-12 flex items-center justify-between md:hidden">
+        <button onClick={() => router.back()} className="p-2 -ml-2 text-slate-800">
+          <ChevronLeft size={24} />
+        </button>
+        <h1 className="font-bold text-slate-900 truncate max-w-[200px] text-sm">{tournament.title}</h1>
+        <button onClick={handleShare} className="p-2 -mr-2 text-slate-800">
+          <Share2 size={20} />
+        </button>
+      </header>
+
+      {/* PC Header */}
+      <div className="hidden md:block border-b border-slate-100 bg-white sticky top-0 z-40">
+        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+           <Link href="/tournaments" className="flex items-center gap-1 text-slate-500 hover:text-slate-900 text-sm font-medium transition-colors">
+             <ChevronLeft size={18} /> 목록으로
+           </Link>
+           <div className="flex items-center gap-1">
+             <Button variant="ghost" size="sm" onClick={handleShare} className="text-slate-500 hover:bg-slate-50 h-9">
+                <Share2 size={18} className="mr-1.5"/> 공유
+             </Button>
+           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 pt-6">
-        <div className="flex flex-col lg:flex-row gap-6 relative">
+      <main className="max-w-6xl mx-auto md:py-10 px-0 md:px-6">
+        <div className="flex flex-col lg:flex-row gap-10 relative">
           
           {/* [LEFT] 메인 콘텐츠 */}
           <div className="flex-1 min-w-0">
             
-            {/* 1. Division 태그 */}
-            {tournament.divisions && (
-              <div className="flex flex-wrap gap-2 mb-3">
-                {tournament.divisions.map((div: string) => (
-                  <Badge key={div} variant="secondary" className="text-xs px-2.5 py-1 tracking-tight">
-                    #{div}
-                  </Badge>
-                ))}
-              </div>
-            )}
-
-            {/* 2. 배너 이미지 */}
-            <div className="relative w-full aspect-[21/9] bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl overflow-hidden mb-6 border border-slate-100 group hover:shadow-md transition-all duration-300">
-              {(tournament.thumbnail_url || tournament.image_url) ? (
-                <Image 
-                  src={tournament.thumbnail_url || tournament.image_url || ''} 
-                  alt={tournament.title} 
-                  fill 
-                  className="object-cover group-hover:scale-105 transition-transform duration-500" 
-                  priority
-                  unoptimized
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-slate-200">
-                  <Trophy size={64} className="opacity-20" />
-                </div>
-              )}
-              <div className="absolute top-4 left-4">
-                <span className="bg-yellow-400 text-slate-900 text-xs font-semibold px-2.5 py-1 rounded-lg shadow-sm tracking-tight">
-                  EVENT
-                </span>
-              </div>
-            </div>
-
-            {/* 3. 타이틀 */}
-            <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 leading-tight mb-4 break-keep tracking-tight">
-              {tournament.title}
-            </h1>
-
-            {/* 4. 메타 정보 */}
-            <div className="flex flex-wrap items-center gap-3 mb-6 text-sm text-slate-500">
-              <div className="flex items-center gap-1.5 tracking-tight">
-                <Calendar size={15} className="text-slate-400"/>
-                <span>{formatDate(tournament.date)}</span>
-              </div>
-              <Separator orientation="vertical" className="h-3"/>
-              <div className="flex items-center gap-1.5 tracking-tight">
-                <MapPin size={15} className="text-slate-400"/>
-                <span>{tournament.location_detail || tournament.location}</span>
-              </div>
-              <Separator orientation="vertical" className="h-3"/>
-              <div className="flex items-center gap-1.5 tracking-tight">
-                <Users size={15} className="text-slate-400"/>
-                <span>{tournament.max_participants}팀 모집</span>
-              </div>
-            </div>
-
-            <Separator className="my-6"/>
-
-            {/* 5. Tabs */}
-            <div className="sticky top-16 z-30 bg-white/95 backdrop-blur-sm pt-3 pb-3 -mx-6 px-6 mb-4 border-b border-slate-100">
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="w-full justify-start bg-transparent border-0 p-0 h-auto gap-6">
-                  <TabsTrigger value="overview" className="text-sm font-medium px-0 pb-2 tracking-tight data-[state=active]:border-b-2 data-[state=active]:border-slate-900 rounded-none">
-                    📋 대회요강
-                  </TabsTrigger>
-                  <TabsTrigger value="schedule" className="text-sm font-medium px-0 pb-2 tracking-tight data-[state=active]:border-b-2 data-[state=active]:border-slate-900 rounded-none">
-                    📅 일정/장소
-                  </TabsTrigger>
-                  <TabsTrigger value="prize" className="text-sm font-medium px-0 pb-2 tracking-tight data-[state=active]:border-b-2 data-[state=active]:border-slate-900 rounded-none">
-                    🏆 상금/혜택
-                  </TabsTrigger>
-                  <TabsTrigger value="notice" className="text-sm font-medium px-0 pb-2 tracking-tight data-[state=active]:border-b-2 data-[state=active]:border-slate-900 rounded-none">
-                    🚨 유의사항
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
-
-            {/* 탭 콘텐츠 */}
-            {activeTab === 'overview' && (
-              <div className="space-y-5">
-                <Card className="border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg font-semibold tracking-tight">대회 개요</CardTitle>
-                    <CardDescription className="tracking-tight">이 대회의 핵심 정보를 확인하세요</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <InfoItem label="대회명" value={tournament.title} />
-                      <InfoItem label="모집 인원" value={`${tournament.max_participants}팀`} />
-                      <InfoItem label="참가 부문" value={tournament.divisions?.join(', ') || '-'} />
-                      <InfoItem label="참가비" value={formattedFee} />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base font-semibold tracking-tight">상세 모집 요강</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap tracking-tight">
-                      {tournament.description}
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base font-semibold tracking-tight">대회 규정 및 세부사항</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <Accordion type="single" collapsible className="w-full">
-                      <AccordionItem value="rule-1" className="border-slate-100">
-                        <AccordionTrigger className="text-sm font-medium tracking-tight hover:no-underline">경기 방식 및 규칙</AccordionTrigger>
-                        <AccordionContent className="text-sm text-slate-600 leading-relaxed tracking-tight">
-                          • 복식 경기 (2인 1팀)<br/>
-                          • 토너먼트 방식 진행<br/>
-                          • ITF 공인구 사용<br/>
-                          • 세트당 6게임 선취 (타이브레이크 적용)
-                        </AccordionContent>
-                      </AccordionItem>
-                      <AccordionItem value="rule-2" className="border-slate-100">
-                        <AccordionTrigger className="text-sm font-medium tracking-tight hover:no-underline">참가 자격</AccordionTrigger>
-                        <AccordionContent className="text-sm text-slate-600 leading-relaxed tracking-tight">
-                          • 만 19세 이상 테니스 동호인<br/>
-                          • 부문별 레벨 제한 있음<br/>
-                          • 프로 선수 참가 불가
-                        </AccordionContent>
-                      </AccordionItem>
-                      <AccordionItem value="rule-3" className="border-slate-100">
-                        <AccordionTrigger className="text-sm font-medium tracking-tight hover:no-underline">환불 규정</AccordionTrigger>
-                        <AccordionContent className="text-sm text-slate-600 leading-relaxed tracking-tight">
-                          • 대회 7일 전: 100% 환불<br/>
-                          • 대회 3~6일 전: 50% 환불<br/>
-                          • 대회 2일 전~당일: 환불 불가
-                        </AccordionContent>
-                      </AccordionItem>
-                    </Accordion>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-            {activeTab === 'schedule' && (
-              <div className="space-y-5">
-                <Card className="border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg font-semibold tracking-tight">대회 일정</CardTitle>
-                    <CardDescription className="tracking-tight">부문별 경기 일정을 확인하세요</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {tournament.schedule?.map((item: any, idx: number) => (
-                        <div key={idx} className="flex gap-3 relative">
-                          {idx !== tournament.schedule.length - 1 && (
-                            <div className="absolute left-[16px] top-10 w-0.5 h-full bg-slate-100"></div>
-                          )}
-                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-50 text-blue-600 shrink-0 z-10">
-                            <Calendar size={16}/>
-                          </div>
-                          <div className="flex-1 pb-4">
-                            <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
-                              <p className="text-sm font-medium text-slate-900 mb-0.5 tracking-tight">{item.date}</p>
-                              <p className="text-sm text-slate-600 tracking-tight">{item.division}</p>
-                              <p className="text-xs text-slate-500 mt-1.5 flex items-center gap-1 tracking-tight">
-                                <Clock size={13}/> {item.time}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base font-semibold tracking-tight">대회 장소</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-start gap-2.5">
-                      <MapPin className="text-blue-600 shrink-0 mt-0.5" size={18}/>
-                      <div>
-                        <p className="font-medium text-slate-900 mb-0.5 tracking-tight">{tournament.location_detail || tournament.location}</p>
-                        {tournament.location && tournament.location_detail && (
-                          <p className="text-sm text-slate-500 tracking-tight">{tournament.location}</p>
+            {/* 2. Hero Section */}
+            <div className="bg-white md:rounded-2xl overflow-hidden mb-8">
+              <div className="relative aspect-video md:aspect-[21/9] bg-slate-50 group md:rounded-2xl overflow-hidden border border-slate-100">
+                 {(tournament.thumbnail_url || tournament.image_url) ? (
+                   <Image 
+                     src={tournament.thumbnail_url || tournament.image_url} 
+                     alt={tournament.title} 
+                     fill 
+                     className="object-cover transition-transform duration-700 group-hover:scale-105"
+                     unoptimized
+                   />
+                 ) : (
+                   <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-300">
+                      <Trophy size={48} className="mb-2 opacity-10" />
+                   </div>
+                 )}
+                 <div className="absolute top-4 left-4 flex gap-2">
+                    <div className="flex items-center gap-2 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm border border-white/50">
+                        <span className={`w-1.5 h-1.5 rounded-full ${isRecruiting ? 'bg-green-500' : 'bg-slate-400'}`}></span>
+                        <span className="text-xs font-bold text-slate-800 tracking-tight">
+                            {isRecruiting ? '접수중' : '마감'}
+                        </span>
+                        {isRecruiting && dDay && (
+                            <>
+                                <div className="w-px h-3 bg-slate-200"></div>
+                                <span className="text-xs font-bold text-rose-500 tracking-tight">{dDay}</span>
+                            </>
                         )}
-                      </div>
                     </div>
-                  </CardContent>
-                </Card>
+                 </div>
               </div>
-            )}
 
-            {activeTab === 'prize' && (
-              <div className="space-y-5">
-                <Card className="border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg font-semibold tracking-tight">시상 내역</CardTitle>
-                    <CardDescription className="tracking-tight">부문별 우승 팀에게 드리는 혜택입니다</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      {tournament.prizes?.map((prize: any, idx: number) => (
-                        <div
-                          key={idx}
-                          className={`relative rounded-xl p-4 text-center border transition-all hover:shadow-md hover:-translate-y-0.5 ${
-                            idx === 0
-                              ? 'bg-gradient-to-br from-yellow-50 to-amber-50 border-yellow-200'
-                              : idx === 1
-                              ? 'bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200'
-                              : 'bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200'
-                          }`}
-                        >
-                          <div className="text-3xl mb-2">
-                            {idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}
-                          </div>
-                          <p className="text-base font-semibold text-slate-900 mb-1 tracking-tight">{prize.rank}</p>
-                          <p className="text-sm text-slate-600 tracking-tight">{prize.reward}</p>
-                        </div>
+              <div className="px-4 md:px-0 pt-6">
+                <div className="mb-6">
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {divisions.map((div: any) => (
+                        <span key={div.id} className="text-xs font-medium text-slate-500 bg-slate-50 px-2 py-1 rounded border border-slate-100">
+                          #{div.name}
+                        </span>
                       ))}
                     </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base font-semibold tracking-tight">입금 계좌</CardTitle>
-                    <CardDescription className="tracking-tight">참가비를 아래 계좌로 입금해주세요</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-xs text-slate-500 mb-1 tracking-tight">계좌번호</p>
-                          <p className="text-lg font-medium text-slate-900 tracking-tight">{tournament.account}</p>
-                          <p className="text-sm text-slate-600 mt-1 tracking-tight">예금주: {tournament.accountHolder}</p>
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleCopyAccount}
-                          className="shrink-0 active:scale-95 transition-transform border-slate-200"
-                        >
-                          {copied ? (
-                            <>
-                              <Check size={14} className="mr-1"/> 복사됨
-                            </>
-                          ) : (
-                            <>
-                              <Copy size={14} className="mr-1"/> 복사
-                            </>
-                          )}
-                        </Button>
-                      </div>
+                    <h1 className="text-2xl md:text-3xl font-bold text-slate-900 leading-snug mb-3 break-keep tracking-tight">
+                        {tournament.title}
+                    </h1>
+                    
+                    {/* 주최/후원사 정보 */}
+                    <div className="space-y-1 text-sm text-slate-500">
+                       <p className="flex items-start gap-2">
+                          <span className="font-bold text-slate-700 shrink-0">주최/주관</span> 
+                          {REAL_DATA.host}
+                       </p>
+                       <p className="flex items-start gap-2">
+                          <span className="font-bold text-slate-700 shrink-0">후원</span> 
+                          <span className="line-clamp-1">{REAL_DATA.sponsor}</span>
+                       </p>
                     </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-            {activeTab === 'notice' && (
-              <div className="space-y-5">
-                <div className="bg-red-50 border-l-4 border-red-500 rounded-lg p-4">
-                  <div className="flex items-start gap-2.5">
-                    <AlertCircle className="text-red-600 shrink-0 mt-0.5" size={18}/>
-                    <div>
-                      <h3 className="font-medium text-red-900 mb-1.5 tracking-tight">필수 확인 사항</h3>
-                      <ul className="text-sm text-red-800 space-y-1 tracking-tight">
-                        <li>• 신분증을 필수로 지참해주세요 (미지참 시 참가 불가)</li>
-                        <li>• 부정선수 적발 시 즉시 실격 처리됩니다</li>
-                        <li>• 기상 악화 시 대회가 연기될 수 있습니다</li>
-                      </ul>
-                    </div>
-                  </div>
                 </div>
 
-                <Card className="border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base font-semibold tracking-tight">참가 전 안내사항</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="text-sm text-slate-600 leading-relaxed space-y-1.5 tracking-tight">
-                      <li>• 대회 시작 30분 전까지 현장 접수를 완료해주세요</li>
-                      <li>• 개인 라켓 및 운동화는 필수 지참사항입니다</li>
-                      <li>• 주차 공간이 제한적이니 대중교통을 이용해주세요</li>
-                      <li>• 대회 중 발생한 부상에 대해서는 주최측이 책임지지 않습니다</li>
-                      <li>• 응급 상황 발생 시 즉시 스태프에게 알려주세요</li>
-                    </ul>
-                  </CardContent>
-                </Card>
+                <Separator className="my-6 bg-slate-100" />
 
-                <Card className="border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base font-semibold tracking-tight">문의처</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2.5 text-sm">
-                      <div className="flex items-center gap-2 tracking-tight">
-                        <span className="text-slate-500 w-20">전화</span>
-                        <span className="text-slate-900 font-medium">010-2227-1731</span>
-                      </div>
-                      <div className="flex items-center gap-2 tracking-tight">
-                        <span className="text-slate-500 w-20">지도자부</span>
-                        <span className="text-slate-900 font-medium">010-5800-8635</span>
-                      </div>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-6">
+                    <div className="flex items-start gap-3">
+                        <Calendar className="text-slate-400 shrink-0 mt-0.5" size={20} />
+                        <div>
+                            <p className="text-xs text-slate-400 font-medium mb-1">대회 기간</p>
+                            <p className="text-sm font-bold text-slate-900 tracking-tight">{formatDate(tournament.date)}</p>
+                        </div>
                     </div>
-                  </CardContent>
-                </Card>
+                    <div className="flex items-start gap-3">
+                        <MapPin className="text-slate-400 shrink-0 mt-0.5" size={20} />
+                        <div>
+                            <p className="text-xs text-slate-400 font-medium mb-1">장소</p>
+                            <p className="text-sm font-bold text-slate-900 break-keep leading-snug tracking-tight">
+                                {tournament.location}
+                            </p>
+                        </div>
+                    </div>
+                </div>
               </div>
-            )}
-
-          </div>
-
-          {/* [RIGHT] Sidebar */}
-          <div className="lg:w-[380px] shrink-0 hidden lg:block">
-            <div className="sticky top-20">
-              <Card className="shadow-md border-slate-200">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <Badge variant={isRecruiting ? "default" : "secondary"} className="text-xs font-medium tracking-tight">
-                      {getStatusText()}
-                    </Badge>
-                    <Badge variant="outline" className="text-xs font-medium text-blue-600 tracking-tight">
-                      {dDay}
-                    </Badge>
-                  </div>
-                  <CardTitle className="text-xl leading-tight line-clamp-2 tracking-tight">
-                    {tournament.title}
-                  </CardTitle>
-                </CardHeader>
-
-                <Separator/>
-
-                <CardContent className="pt-5 space-y-5">
-                  <div className="space-y-2.5">
-                    <SidebarInfoRow icon={<Calendar size={15}/>} label="대회일정" value={formatDate(tournament.date)} />
-                    <SidebarInfoRow icon={<MapPin size={15}/>} label="장소" value={tournament.location_detail || tournament.location} />
-                    <SidebarInfoRow icon={<Users size={15}/>} label="모집 팀 수" value={`${tournament.max_participants}팀`} />
-                    <SidebarInfoRow icon={<Trophy size={15}/>} label="참가비" value={formattedFee} />
-                  </div>
-
-                  <Separator/>
-
-                  <div className="mb-5">
-                    {tournament.registration_link ? (
-                      <Link href={tournament.registration_link} target="_blank">
-                        <Button className="w-full h-12 text-base font-semibold bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 shadow-sm text-white tracking-tight active:scale-95 transition-transform">
-                          신청페이지 바로가기
-                          <ExternalLink size={16} className="ml-1.5"/>
-                        </Button>
-                      </Link>
-                    ) : (
-                      <Button
-                        disabled={!isRecruiting}
-                        className={`w-full h-12 text-base font-semibold shadow-sm tracking-tight active:scale-95 transition-transform ${
-                          isRecruiting
-                            ? 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white'
-                            : 'bg-slate-200 text-slate-500 cursor-not-allowed'
-                        }`}
-                      >
-                        {isRecruiting ? '참가 신청하기' : '마감되었습니다'}
-                      </Button>
-                    )}
-                  </div>
-
-                  <div className="flex gap-2.5 w-full">
-                    <div className="flex-1">
-                      <BookmarkButton tournamentId={tournament.id} variant="outline" />
-                    </div>
-                    <div className="flex-1">
-                      <Button variant="outline" className="w-full h-10 font-medium text-sm tracking-tight border-slate-200 active:scale-95 transition-transform">
-                        <Share2 size={15} className="mr-1"/> 공유
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-3.5 border border-blue-100">
-                    <div className="flex items-center gap-1.5 mb-1.5">
-                      <Badge className="bg-blue-600 text-white text-xs font-medium tracking-tight">EVENT</Badge>
-                    </div>
-                    <p className="text-sm text-slate-700 leading-relaxed tracking-tight">
-                      🎾 대회 참가 후기 남기면<br/>
-                      <span className="text-blue-700 font-medium">1,000 포인트</span> 드려요!
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
+
+            {/* 3. Tabs */}
+            <Tabs defaultValue="overview" className="mt-10" value={activeTab} onValueChange={setActiveTab}>
+              <div className="sticky top-12 md:top-14 z-30 bg-white pb-2 border-b border-slate-100">
+                 <TabsList className="w-full justify-start h-auto p-0 bg-transparent gap-8">
+                    {['overview', 'schedule', 'regulation', 'contact'].map((tab) => (
+                      <TabsTrigger 
+                        key={tab}
+                        value={tab} 
+                        className="rounded-none border-b-2 border-transparent px-0 pb-3 text-sm font-medium text-slate-500 hover:text-slate-800 data-[state=active]:border-slate-900 data-[state=active]:text-slate-900 transition-colors bg-transparent shadow-none"
+                      >
+                        {tab === 'overview' && '대회 요강'}
+                        {tab === 'schedule' && '일정/계좌'}
+                        {tab === 'regulation' && '규정'}
+                        {tab === 'contact' && '문의처'}
+                      </TabsTrigger>
+                    ))}
+                 </TabsList>
+              </div>
+
+              <div className="pt-6 min-h-[400px]">
+                
+                {/* [TAB 1] Overview */}
+                <TabsContent value="overview" className="space-y-8 px-4 md:px-0 mt-0">
+                    <div className="bg-slate-50 rounded-xl p-5 border border-slate-100">
+                        <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
+                            <Info size={16} className="text-blue-500"/> 대회 요약
+                        </h3>
+                        <div className="space-y-3 text-sm">
+                            <div className="flex justify-between items-center py-2 border-b border-slate-200/60">
+                                <span className="text-slate-500">라이브 중계</span>
+                                <span className="text-slate-900 font-medium text-right flex items-center gap-1">
+                                  <Youtube size={14} className="text-red-500"/> {REAL_DATA.live}
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center py-2 border-b border-slate-200/60">
+                                <span className="text-slate-500">사용구</span>
+                                <span className="text-slate-900 font-medium">{REAL_DATA.ball}</span>
+                            </div>
+                            <div className="flex justify-between items-center py-2">
+                                <span className="text-slate-500">참가비</span>
+                                <span className="text-blue-600 font-bold">{formatFee(minFee)}원 ~</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <section>
+                         <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                            <Trophy size={20} className="text-amber-500"/> 시상 내역
+                        </h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                           {[{r: '🥇 우승', p: '상금 100만원'}, {r: '🥈 준우승', p: '상금 60만원'}, {r: '🥉 공동3위', p: '상금 40만원'}].map((item, idx) => (
+                             <div key={idx} className="p-5 rounded-xl bg-white border border-slate-100 text-center shadow-sm">
+                                <p className="text-sm font-bold text-slate-700 mb-1">{item.r}</p>
+                                <p className="font-bold text-slate-900">{item.p}</p>
+                             </div>
+                           ))}
+                        </div>
+                        <p className="text-xs text-slate-400 mt-2 text-center">* 70팀 미만 시 상금 삭감 조정, 150팀 이상 시 상향 조정</p>
+                    </section>
+                </TabsContent>
+
+                {/* [TAB 2] Schedule & Accounts */}
+                <TabsContent value="schedule" className="space-y-8 px-4 md:px-0 mt-0">
+                    <section>
+                        <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                            <Clock size={20} className="text-slate-400"/> 부서별 일정
+                        </h3>
+                        {divisions.length > 0 ? (
+                            <div className="space-y-3">
+                                {divisions.map((div: any) => (
+                                    <div key={div.id} className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-100 shadow-sm">
+                                        <div>
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className="font-bold text-slate-900">{div.name}</span>
+                                            </div>
+                                            <div className="text-sm text-slate-500 flex items-center gap-1.5">
+                                                <Calendar size={13}/> {formatDate(div.date_start)}
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="block text-lg font-bold text-slate-900 tracking-tight">{div.time_start?.substring(0,5) || '09:00'}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="p-6 text-center text-slate-400 bg-slate-50 rounded-xl">일정이 없습니다.</div>
+                        )}
+                    </section>
+
+                    <section>
+                        <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                            <CreditCard size={20} className="text-blue-500"/> 부서별 입금 계좌
+                        </h3>
+                        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                            <div className="p-6 text-center border-b border-slate-100 bg-slate-50/50">
+                                <p className="text-xs text-slate-500 font-medium mb-1">팀당 참가비</p>
+                                <p className="text-3xl font-bold text-slate-900 tracking-tight">{formatFee(minFee)}<span className="text-lg font-normal text-slate-400 ml-1">원</span></p>
+                                <p className="text-xs text-slate-400 mt-1">[팀당 4천원 꿈나무육성기금 포함]</p>
+                            </div>
+                            <div className="divide-y divide-slate-100">
+                                {REAL_DATA.accounts.map((acc, idx) => (
+                                    <div key={idx} className="flex items-center justify-between p-4 hover:bg-slate-50 transition-colors">
+                                        <div>
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <Badge variant="secondary" className="text-[10px] bg-slate-100 text-slate-600 border-0 px-1.5 py-0.5">{acc.name}</Badge>
+                                                <span className="text-xs text-slate-400">{acc.owner}</span>
+                                            </div>
+                                            <p className="text-sm text-slate-900 font-medium">
+                                                {acc.bank} <span className="font-bold">{acc.number}</span>
+                                            </p>
+                                        </div>
+                                        <Button 
+                                            size="sm" variant="outline" 
+                                            onClick={() => handleCopy(acc.number, acc.number)} 
+                                            className="h-8 text-xs bg-white border-slate-200 text-slate-600"
+                                        >
+                                            {copied === acc.number ? <Check size={12} className="mr-1"/> : <Copy size={12} className="mr-1"/>}
+                                            {copied === acc.number ? '완료' : '복사'}
+                                        </Button>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="bg-rose-50 p-4 border-t border-rose-100">
+                                <p className="text-xs text-rose-600 flex items-center gap-1.5 font-medium">
+                                    <AlertCircle size={14} /> 환불 마감: {REAL_DATA.refund}
+                                </p>
+                            </div>
+                        </div>
+                    </section>
+                </TabsContent>
+
+                {/* [TAB 3] Regulations (Accordion) */}
+                <TabsContent value="regulation" className="space-y-6 px-4 md:px-0 mt-0">
+                    <Card className="border-slate-200 shadow-sm">
+                         <CardHeader className="py-4 border-b border-slate-100">
+                            <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+                                <Siren size={18} className="text-rose-500"/> 상세 규정
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                            <Accordion type="single" collapsible className="w-full">
+                                <AccordionItem value="item-1" className="border-b border-slate-100">
+                                    <AccordionTrigger className="px-6 py-4 font-bold text-slate-800 hover:no-underline hover:bg-slate-50">
+                                        ◈ 부부 출전 규정
+                                    </AccordionTrigger>
+                                    <AccordionContent className="px-6 pb-6 text-slate-600 leading-relaxed bg-slate-50/30">
+                                        <ul className="list-disc pl-4 space-y-1 text-sm">
+                                            <li>전국 부부 순수동호인 출전 가능</li>
+                                            <li>전국부부시합 우승, 준우승 출전불가 (사랑부에 출전 가능)</li>
+                                            <li>부부대회 80개팀 미만 입상자(우승자 포함) 출전 가능</li>
+                                            <li>부부 증빙할 수 있는 서류 지참 필수</li>
+                                        </ul>
+                                    </AccordionContent>
+                                </AccordionItem>
+                                <AccordionItem value="item-2" className="border-b border-slate-100">
+                                    <AccordionTrigger className="px-6 py-4 font-bold text-slate-800 hover:no-underline hover:bg-slate-50">
+                                        ◈ 지도자부 자격 및 규정
+                                    </AccordionTrigger>
+                                    <AccordionContent className="px-6 pb-6 text-slate-600 leading-relaxed bg-slate-50/30">
+                                        <p className="text-sm mb-2 font-bold text-slate-800">합산 7.0 이하 페어 구성</p>
+                                        <ul className="list-disc pl-4 space-y-1 text-sm">
+                                            <li>고등학교 선수출신 중 만50세 이상 (1점)</li>
+                                            <li>대학선수출신 만 50세 이상 (2점)</li>
+                                            <li>실업선수출신 만 50세 이상 (3점)</li>
+                                            <li>*각 등급에서 만 2년 이내 우승자는 2점 상승</li>
+                                        </ul>
+                                    </AccordionContent>
+                                </AccordionItem>
+                                <AccordionItem value="item-3" className="border-none">
+                                    <AccordionTrigger className="px-6 py-4 font-bold text-slate-800 hover:no-underline hover:bg-slate-50">
+                                        ◈ 혼합복식부 규정
+                                    </AccordionTrigger>
+                                    <AccordionContent className="px-6 pb-6 text-slate-600 leading-relaxed bg-slate-50/30">
+                                        <ul className="list-disc pl-4 space-y-1 text-sm">
+                                            <li>마스터스 8점 이상 + 개나리부</li>
+                                            <li>마스터스 7점 이하 + 국화부 비우승자</li>
+                                            <li>전국 혼합복식 우승, 준우승경력자 간 파트너 분리출전</li>
+                                        </ul>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            </Accordion>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* [TAB 4] Contact */}
+                <TabsContent value="contact" className="space-y-6 px-4 md:px-0 mt-0">
+                     <Card className="border-slate-200 shadow-sm">
+                        <CardHeader className="py-4 border-b border-slate-100">
+                            <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+                                <Phone size={18} className="text-green-500"/> 문의처
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-6 grid gap-4">
+                            {REAL_DATA.contacts.map((contact, idx) => (
+                                <div key={idx} className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-100 shadow-sm">
+                                    <div>
+                                        <span className="text-xs font-bold text-slate-400 block mb-0.5">{contact.role}</span>
+                                        <p className="text-base font-bold text-slate-900">{contact.name}</p>
+                                    </div>
+                                    <Button variant="outline" size="sm" className="gap-2 h-9 px-4" asChild>
+                                        <a href={`tel:${contact.phone}`}>
+                                            <Phone size={14}/> {contact.phone}
+                                        </a>
+                                    </Button>
+                                </div>
+                            ))}
+                        </CardContent>
+                    </Card>
+                    
+                     <Card className="border-slate-200 shadow-sm">
+                        <CardHeader className="py-4 border-b border-slate-100">
+                            <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+                                <MapPin size={18} className="text-blue-500"/> 경기장 안내
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-6">
+                            <p className="font-bold text-slate-900 mb-1 text-lg leading-snug">{tournament.location_detail || tournament.location}</p>
+                            <div className="w-full h-56 bg-slate-50 rounded-lg flex items-center justify-center text-slate-300 text-sm border border-slate-100 mt-4">
+                                지도 API 연동 영역
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+              </div>
+            </Tabs>
+
+          </div>
+
+          {/* ===================================== */}
+          {/* [RIGHT] Sidebar (Desktop Sticky)      */}
+          {/* ===================================== */}
+          <div className="hidden lg:block w-[320px] shrink-0">
+             <div className="sticky top-20 space-y-4">
+                <Card className="border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden rounded-2xl">
+                   <div className="p-6">
+                      <div className="mb-6">
+                         <div className="flex items-center gap-2 mb-2">
+                            <span className={`w-2 h-2 rounded-full ${isRecruiting ? 'bg-green-500' : 'bg-slate-300'}`}></span>
+                            <span className="text-sm font-bold text-slate-900">{isRecruiting ? '접수중' : '접수마감'}</span>
+                            {isRecruiting && dDay && (
+                                <span className="text-sm font-bold text-rose-500 ml-auto">{dDay}</span>
+                            )}
+                         </div>
+                         <h3 className="text-lg font-bold leading-snug break-keep text-slate-900">{tournament.title}</h3>
+                      </div>
+
+                      <Separator className="my-5 bg-slate-100" />
+
+                      <div className="space-y-4 mb-6">
+                         <div className="flex justify-between items-start text-sm">
+                            <span className="text-slate-500 shrink-0">일시</span>
+                            <span className="text-slate-900 font-medium text-right">{formatDate(tournament.date)}</span>
+                         </div>
+                         <div className="flex justify-between items-start text-sm">
+                            <span className="text-slate-500 shrink-0">장소</span>
+                            <span className="text-slate-900 font-medium text-right flex-1 pl-4 break-keep">
+                                {tournament.location}
+                            </span>
+                         </div>
+                      </div>
+
+                      <div className="space-y-3">
+                         {tournament.registration_link ? (
+                            <Button className="w-full h-12 text-base font-semibold bg-[#3182F6] hover:bg-blue-600 text-white rounded-xl shadow-md shadow-blue-200" asChild>
+                               <a href={tournament.registration_link} target="_blank" rel="noopener noreferrer">
+                                  접수하러 가기
+                               </a>
+                            </Button>
+                         ) : (
+                            <Button
+                              disabled={!isRecruiting}
+                              className={`w-full h-12 text-base font-semibold rounded-xl ${
+                                isRecruiting ? 'bg-[#3182F6] hover:bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'
+                              }`}
+                            >
+                               {isRecruiting ? '참가 신청하기' : '접수 마감'}
+                            </Button>
+                         )}
+
+                         <div className="flex gap-2.5">
+                            <BookmarkButton
+                              tournamentId={tournament.id}
+                              variant="outline"
+                              className="flex-1 h-12 border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 font-medium rounded-xl"
+                            />
+                            <Button variant="outline" className="flex-1 h-12 border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 font-medium rounded-xl gap-2 shadow-none" onClick={handleShare}>
+                               <Share2 size={16} /> 공유
+                            </Button>
+                         </div>
+                      </div>
+                   </div>
+                </Card>
+                
+                {/* 🔥 [RESTORED] 알림 배너 복구 완료 */}
+                <div className="bg-gradient-to-r from-violet-600 to-indigo-600 rounded-xl p-5 text-white shadow-xl shadow-violet-200">
+                   <div className="flex items-center justify-between mb-1">
+                      <p className="font-bold text-sm">📢 대회 알림 받기</p>
+                      <Badge className="bg-white/20 hover:bg-white/30 text-white border-0 text-[10px]">NEW</Badge>
+                   </div>
+                   <p className="text-xs text-violet-100 leading-relaxed">원하는 대회가 열리면 가장 먼저 알려드려요! 놓치지 말고 신청하세요.</p>
+                </div>
+             </div>
           </div>
 
         </div>
+      </main>
 
-        {/* Mobile Bottom CTA */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-sm border-t border-slate-100 z-50 shadow-lg">
-          {tournament.registration_link ? (
-            <Link href={tournament.registration_link} target="_blank">
-              <Button className="w-full h-12 text-base font-semibold bg-gradient-to-r from-blue-500 to-indigo-500 text-white tracking-tight active:scale-95 transition-transform">
-                신청페이지 바로가기
-              </Button>
-            </Link>
-          ) : (
-            <Button
-              disabled={!isRecruiting}
-              className={`w-full h-12 text-base font-semibold tracking-tight active:scale-95 transition-transform ${
-                isRecruiting
-                  ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white'
-                  : 'bg-slate-200 text-slate-500'
-              }`}
-            >
-              {isRecruiting ? '참가 신청하기' : '마감'}
-            </Button>
-          )}
+      {/* Footer */}
+      <Footer />
+
+      {/* 4. Bottom Sticky Action Bar (Mobile Only) */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-100 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] md:hidden z-50 safe-area-bottom">
+        <div className="flex gap-3">
+            <div className="shrink-0">
+               <BookmarkButton
+                 tournamentId={tournament.id}
+                 variant="default"
+                 className="w-12 h-12 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
+               />
+            </div>
+            {tournament.registration_link ? (
+               <Button size="lg" className="flex-1 bg-[#3182F6] hover:bg-blue-600 text-white font-bold h-12 rounded-xl" asChild>
+                  <a href={tournament.registration_link} target="_blank" rel="noopener noreferrer">
+                     접수하러 가기
+                  </a>
+               </Button>
+            ) : (
+               <Button disabled={!isRecruiting} size="lg" className={`flex-1 font-bold h-12 rounded-xl ${isRecruiting ? 'bg-[#3182F6] text-white' : 'bg-slate-100 text-slate-400'}`}>
+                  {isRecruiting ? '참가 신청' : '마감'}
+               </Button>
+            )}
         </div>
       </div>
-    </div>
-  );
-}
 
-// Helper Components
-function InfoItem({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-xs text-slate-500 mb-0.5 tracking-tight">{label}</p>
-      <p className="text-sm font-medium text-slate-900 tracking-tight">{value}</p>
-    </div>
-  );
-}
-
-function SidebarInfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return (
-    <div className="flex items-center gap-2.5">
-      <div className="w-7 h-7 rounded-lg bg-slate-50 flex items-center justify-center text-slate-600 shrink-0">
-        {icon}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-xs text-slate-500 mb-0.5 tracking-tight">{label}</p>
-        <p className="text-sm text-slate-900 font-medium truncate tracking-tight">{value}</p>
-      </div>
     </div>
   );
 }
