@@ -4,7 +4,11 @@ import { Inter } from 'next/font/google';
 import Header from '@/components/layout/Header';
 import { Toaster } from 'react-hot-toast';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800', '900'],
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: '치다 - 테니스 대회의 모든 것',
