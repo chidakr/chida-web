@@ -55,11 +55,6 @@
   --chart-5: 340 75% 55%;
 }
 
-@theme inline {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
 * {
   border-color: hsl(var(--border));
 }
