@@ -18,6 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { BookmarkButton } from '@/components/tournaments';
 import Footer from '@/components/layout/Footer';
+import { parseLocation } from '@/lib/utils';
 
 // ----------------------------------------------------------------------
 // [UTILS] 날짜 및 포맷팅
@@ -97,7 +98,10 @@ export default function TournamentDetailPage() {
               current_participants,
               status,
               description,
-              location
+              location,
+              account_bank,
+              account_number,
+              account_owner
             )
           `)
           .eq('id', id)
@@ -175,6 +179,18 @@ export default function TournamentDetailPage() {
   const minFee = divisions.length > 0
     ? Math.min(...divisions.map((d: any) => d.fee).filter((f: number) => f > 0))
     : tournament.fee;
+
+  const { region, detail } = parseLocation(tournament.location, tournament.location_detail);
+
+  // 🔥 부서별 계좌 정보 추출 (tournament_divisions에서)
+  const divisionAccounts = divisions
+    .filter((div: any) => div.account_number && div.account_bank)
+    .map((div: any) => ({
+      name: div.name,
+      bank: div.account_bank,
+      number: div.account_number,
+      owner: div.account_owner || div.account_holder || ''
+    }));
 
   return (
     <div className="min-h-screen bg-white pb-24 md:pb-0 font-sans text-slate-900">
@@ -303,8 +319,13 @@ export default function TournamentDetailPage() {
                         <div>
                             <p className="text-xs text-slate-400 font-medium mb-1">장소</p>
                             <p className="text-sm font-bold text-slate-900 break-keep leading-snug tracking-tight">
-                                {tournament.location_detail || tournament.location_city || tournament.location}
+                                {region}
                             </p>
+                            {detail && (
+                                <p className="text-xs text-slate-500 mt-1 line-clamp-2 break-keep leading-relaxed">
+                                    {detail}
+                                </p>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -418,27 +439,34 @@ export default function TournamentDetailPage() {
                                 <p className="text-xs text-slate-400 mt-1">[팀당 4천원 꿈나무육성기금 포함]</p>
                             </div>
                             <div className="divide-y divide-slate-100">
-                                {REAL_DATA.accounts.map((acc, idx) => (
-                                    <div key={idx} className="flex items-center justify-between p-4 hover:bg-slate-50 transition-colors">
-                                        <div>
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <Badge variant="secondary" className="text-[10px] bg-slate-100 text-slate-600 border-0 px-1.5 py-0.5">{acc.name}</Badge>
-                                                <span className="text-xs text-slate-400">{acc.owner}</span>
+                                {divisionAccounts && divisionAccounts.length > 0 ? (
+                                    divisionAccounts.map((acc, idx) => (
+                                        <div key={idx} className="flex items-center justify-between p-4 hover:bg-slate-50 transition-colors">
+                                            <div>
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <Badge variant="secondary" className="text-[10px] bg-slate-100 text-slate-600 border-0 px-1.5 py-0.5">{acc.name}</Badge>
+                                                    {acc.owner && <span className="text-xs text-slate-400">{acc.owner}</span>}
+                                                </div>
+                                                <p className="text-sm text-slate-900 font-medium">
+                                                    {acc.bank} <span className="font-bold">{acc.number}</span>
+                                                </p>
                                             </div>
-                                            <p className="text-sm text-slate-900 font-medium">
-                                                {acc.bank} <span className="font-bold">{acc.number}</span>
-                                            </p>
+                                            <Button
+                                                size="sm" variant="outline"
+                                                onClick={() => handleCopy(acc.number, acc.number)}
+                                                className="h-8 text-xs bg-white border-slate-200 text-slate-600"
+                                            >
+                                                {copied === acc.number ? <Check size={12} className="mr-1"/> : <Copy size={12} className="mr-1"/>}
+                                                {copied === acc.number ? '완료' : '복사'}
+                                            </Button>
                                         </div>
-                                        <Button 
-                                            size="sm" variant="outline" 
-                                            onClick={() => handleCopy(acc.number, acc.number)} 
-                                            className="h-8 text-xs bg-white border-slate-200 text-slate-600"
-                                        >
-                                            {copied === acc.number ? <Check size={12} className="mr-1"/> : <Copy size={12} className="mr-1"/>}
-                                            {copied === acc.number ? '완료' : '복사'}
-                                        </Button>
+                                    ))
+                                ) : (
+                                    <div className="p-8 text-center bg-slate-50">
+                                        <p className="text-slate-400 font-medium mb-1">계좌 정보가 등록되지 않았습니다.</p>
+                                        <p className="text-xs text-slate-400">부서별 입금 계좌는 관리자가 등록한 후 표시됩니다.</p>
                                     </div>
-                                ))}
+                                )}
                             </div>
                             <div className="bg-rose-50 p-4 border-t border-rose-100">
                                 <p className="text-xs text-rose-600 flex items-center gap-1.5 font-medium">
@@ -535,13 +563,20 @@ export default function TournamentDetailPage() {
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-6">
-                            <p className="font-bold text-slate-900 mb-1 text-lg leading-snug">
-                              {tournament.location_detail || tournament.location_city || tournament.location}
-                            </p>
-                            {tournament.location_detail && (tournament.location_city || tournament.location) && (
-                              <p className="text-sm text-slate-500 mt-1">{tournament.location_city || tournament.location}</p>
-                            )}
-                            <div className="w-full h-56 bg-slate-50 rounded-lg flex items-center justify-center text-slate-300 text-sm border border-slate-100 mt-4">
+                            <div className="flex items-start gap-3 mb-4">
+                                <MapPin className="text-slate-400 shrink-0 mt-1" size={20} />
+                                <div>
+                                    <p className="font-bold text-slate-900 text-lg leading-snug">
+                                        {region}
+                                    </p>
+                                    {detail && (
+                                        <p className="text-sm text-slate-500 mt-1 break-keep leading-relaxed">
+                                            {detail}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="w-full h-56 bg-slate-50 rounded-lg flex items-center justify-center text-slate-300 text-sm border border-slate-100">
                                 지도 API 연동 영역
                             </div>
                         </CardContent>
@@ -600,9 +635,16 @@ export default function TournamentDetailPage() {
                          </div>
                          <div className="flex justify-between items-start text-sm">
                             <span className="text-slate-500 shrink-0">장소</span>
-                            <span className="text-slate-900 font-medium text-right flex-1 pl-4 break-keep">
-                                {tournament.location_detail || tournament.location_city || tournament.location}
-                            </span>
+                            <div className="text-right flex-1 pl-4">
+                                <div className="text-slate-900 font-bold break-keep">
+                                    {region}
+                                </div>
+                                {detail && (
+                                    <div className="text-xs text-slate-500 mt-0.5 break-keep">
+                                        {detail}
+                                    </div>
+                                )}
+                            </div>
                          </div>
                       </div>
 

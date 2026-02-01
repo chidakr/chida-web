@@ -4,7 +4,12 @@ import { Inter } from 'next/font/google';
 import Header from '@/components/layout/Header';
 import { Toaster } from 'react-hot-toast';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800', '900'],
+  display: 'swap',
+  variable: '--font-inter',
+});
 
 export const metadata: Metadata = {
   title: '치다 - 테니스 대회의 모든 것',
@@ -18,7 +23,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko">
-      <body className={inter.className}>
+      <body className={`${inter.variable} font-sans`}>
         <Header />
         {children}
         <Toaster 

@@ -38,7 +38,7 @@ function TournamentListContent() {
   const [isSearchExpanded, setIsSearchExpanded] = useState(() => !!searchParams.get('search'));
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isLocationOpen, setIsLocationOpen] = useState(false);
-  const [hoveredCategory, setHoveredCategory] = useState<CategoryItem>(CATEGORIES[1]);
+  const [hoveredCategory, setHoveredCategory] = useState<CategoryItem>(CATEGORIES[0]);
 
   const categoryRef = useRef<HTMLDivElement>(null);
   const locationRef = useRef<HTMLDivElement>(null);
@@ -153,9 +153,16 @@ function TournamentListContent() {
             
             {/* [필터 1] 카테고리 */}
             <div className="relative z-50" ref={categoryRef}>
-              <Button 
-                variant={isCategoryOpen || (filterMain !== '카테고리 선택' && filterMain !== '전체 보기') ? "secondary" : "outline"}
-                onClick={() => { setIsCategoryOpen(!isCategoryOpen); setIsLocationOpen(false); }}
+              <Button
+                variant={isCategoryOpen || (filterMain !== '카테고리 선택' && filterMain !== '전체') ? "secondary" : "outline"}
+                onClick={() => {
+                  // 모달 열 때 전체로 초기화 (컴팩트하게)
+                  if (!isCategoryOpen) {
+                    setHoveredCategory(CATEGORIES[0]);
+                  }
+                  setIsCategoryOpen(!isCategoryOpen);
+                  setIsLocationOpen(false);
+                }}
                 className="min-w-[160px] justify-between"
               >
                 <span className="truncate max-w-[140px]">{filterSub || filterMain}</span>
@@ -163,48 +170,87 @@ function TournamentListContent() {
               </Button>
 
               {isCategoryOpen && (
-                <div className="absolute top-full left-0 mt-2 w-[360px] md:w-[500px] bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden flex z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                    <div className="w-[40%] bg-slate-50/50 border-r border-slate-200 p-3">
-                      {CATEGORIES.map((cat) => (
-                        <div 
-                          key={cat.id}
-                          onMouseEnter={() => setHoveredCategory(cat)}
-                          onClick={(e) => { 
-                            e.stopPropagation();
-                            setFilterMain(cat.label); 
-                            setFilterSub(''); 
-                          }}
-                          className={`px-4 py-3 mb-1 rounded-xl text-sm font-semibold cursor-pointer flex items-center justify-between transition-all
-                            ${hoveredCategory.id === cat.id ? 'bg-white text-[#3182F6] shadow-sm' : 'text-slate-600 hover:bg-white/50'}`}
-                        >
-                          <div className="flex items-center gap-2.5">
-                            {'color' in cat && cat.color ? <div className={`w-2 h-2 rounded-full ${cat.color}`} /> : null}
-                            <span>{cat.label}</span>
-                          </div>
-                          <ChevronRight size={14} className="text-slate-400" />
-                        </div>
-                      ))}
-                    </div>
-                    <div className="w-[60%] p-4 max-h-[380px] overflow-y-auto">
-                      <p className="px-2 py-1 text-xs font-bold text-slate-400 mb-2">{hoveredCategory.label}</p>
-                      <div className="grid grid-cols-1 gap-1">
-                        {hoveredCategory.sub.map((subItem) => (
-                          <div 
-                            key={subItem}
-                            onClick={(e) => { 
-                              e.stopPropagation();
-                              setFilterMain(hoveredCategory.label); 
-                              setFilterSub(subItem); 
-                            }}
-                            className={`px-4 py-3 rounded-xl text-sm font-medium cursor-pointer flex items-center justify-between transition-all
-                              ${filterSub === subItem ? 'bg-blue-50 text-[#3182F6] font-semibold' : 'hover:bg-slate-50 text-slate-700'}`}
-                          >
-                            <span>{subItem}</span>
-                            {filterSub === subItem && <Check size={16} />}
-                          </div>
-                        ))}
+                <div className={`absolute top-full left-0 mt-2 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden flex z-50 animate-in fade-in slide-in-from-top-2 duration-200 transition-none ${
+                  hoveredCategory.sub.length > 0 ? 'w-[500px]' : 'w-[240px]'
+                }`}>
+                    <div className="w-[240px] bg-slate-50/50 p-3 flex-shrink-0">
+                      {/* 카테고리 헤더 (선택 불가) */}
+                      <div className="px-4 py-2 mb-2 text-xs font-bold text-slate-400 pointer-events-none border-b border-slate-200 pb-3">
+                        카테고리
                       </div>
+
+                      {CATEGORIES.map((cat) => {
+                        // Tailwind JIT를 위한 명시적 클래스명 매핑
+                        const getCircleColor = (id: string) => {
+                          switch (id) {
+                            case 'all': return 'bg-slate-400';
+                            case 'men': return 'bg-blue-500';
+                            case 'women': return 'bg-pink-500';
+                            case 'mixed': return 'bg-purple-500';
+                            case 'single': return 'bg-green-500';
+                            default: return '';
+                          }
+                        };
+
+                        return (
+                          <div
+                            key={cat.id}
+                            onMouseEnter={() => {
+                              // 호버 시 서브메뉴 보여주기 (전체 제외)
+                              if (cat.id !== 'all') {
+                                setHoveredCategory(cat);
+                              }
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+
+                              // "전체" 클릭 시 모달 바로 닫기
+                              if (cat.id === 'all') {
+                                setFilterMain('카테고리 선택');
+                                setFilterSub('');
+                                setIsCategoryOpen(false);
+                              } else {
+                                // 다른 카테고리 클릭 시 필터 적용하고 모달 닫기
+                                setFilterMain(cat.label);
+                                setFilterSub('');
+                                setIsCategoryOpen(false);
+                              }
+                            }}
+                            className={`px-4 py-3 mb-1 rounded-xl text-sm font-medium cursor-pointer flex items-center justify-between transition-all
+                              ${hoveredCategory.id === cat.id ? 'bg-white text-[#3182F6] shadow-sm' : 'text-slate-600 hover:bg-white/50'}`}
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <div className={`w-2 h-2 rounded-full ${getCircleColor(cat.id)}`} />
+                              <span>{cat.label}</span>
+                            </div>
+                            {cat.id !== 'all' && <ChevronRight size={14} className="text-slate-400" />}
+                          </div>
+                        );
+                      })}
                     </div>
+                    {hoveredCategory.sub.length > 0 && (
+                      <div className="w-[260px] p-4 max-h-[380px] overflow-y-auto flex-shrink-0 border-l border-slate-200">
+                        <p className="px-2 py-1 text-xs font-bold text-slate-400 mb-2">{hoveredCategory.label}</p>
+                        <div className="grid grid-cols-1 gap-1">
+                          {hoveredCategory.sub.map((subItem) => (
+                            <div
+                              key={subItem}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setFilterMain(hoveredCategory.label);
+                                setFilterSub(subItem);
+                                setIsCategoryOpen(false); // 모달 닫기
+                              }}
+                              className={`px-4 py-3 rounded-xl text-sm font-medium cursor-pointer flex items-center justify-between transition-all
+                                ${filterSub === subItem ? 'bg-blue-50 text-[#3182F6] font-semibold' : 'hover:bg-slate-50 text-slate-700'}`}
+                            >
+                              <span>{subItem}</span>
+                              {filterSub === subItem && <Check size={16} />}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                 </div>
               )}
             </div>
@@ -310,21 +356,6 @@ function TournamentListContent() {
               </Button>
             )}
           </div>
-
-          {/* Active Filter Chips (선택된 필터 표시) - 카테고리만 */}
-          {filterSub && (
-            <div className="flex items-center gap-2 mt-3 pt-3">
-              <Badge variant="default" className="gap-1.5">
-                <span>{filterSub}</span>
-                <button
-                  onClick={() => setFilterSub('')}
-                  className="hover:bg-primary/80 rounded-full p-0.5 transition-colors"
-                >
-                  <X size={12} />
-                </button>
-              </Badge>
-            </div>
-          )}
 
           {/* Expandable Search Input (Shadcn UI) */}
           <div
