@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run dev:*)",
+      "Bash(timeout /t 5)",
+      "Bash(ping:*)",
+      "Bash(taskkill:*)",
+      "Bash(del /F /Q \".next\\\\dev\\\\lock\")",
+      "Bash(powershell -Command:*)",
+      "Bash(npm install)",
+      "Bash(git remote set-url:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git fetch:*)"
+    ]
+  }
+}

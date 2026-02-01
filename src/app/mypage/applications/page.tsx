@@ -5,9 +5,18 @@ import { createClient } from '@/utils/supabase/client';
 import Link from 'next/link';
 import { ChevronLeft, Calendar, MapPin, AlertCircle, CheckCircle2 } from 'lucide-react';
 
+type ParticipantWithTournament = import('@/types').Participant & {
+  tournaments: {
+    title: string;
+    date: string;
+    location: string;
+    fee: number;
+  };
+};
+
 export default function ApplicationsPage() {
   const supabase = createClient();
-  const [list, setList] = useState<import('@/types').Participant[]>([]);
+  const [list, setList] = useState<ParticipantWithTournament[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -72,7 +81,7 @@ export default function ApplicationsPage() {
               <div key={item.id} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
                 {/* 상단: 상태 뱃지 & 날짜 */}
                 <div className="flex justify-between items-start mb-3">
-                    <StatusBadge status={item.status} />
+                    <StatusBadge status={item.status || 'pending'} />
                     <span className="text-xs font-bold text-slate-400">{item.tournaments.date}</span>
                 </div>
 
