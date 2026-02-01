@@ -13,10 +13,19 @@ type Profile = {
   avatar_url?: string;
 };
 
+type ParticipantWithTournament = import('@/types').Participant & {
+  tournaments: {
+    title: string;
+    date: string;
+    location: string;
+    fee: number;
+  };
+};
+
 export default function MyPageHome() {
   const supabase = createClient();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [recentApps, setRecentApps] = useState<import('@/types').Participant[]>([]);
+  const [recentApps, setRecentApps] = useState<ParticipantWithTournament[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
