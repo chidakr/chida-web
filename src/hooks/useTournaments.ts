@@ -40,7 +40,7 @@ export function useTournaments(filters?: TournamentsFilters) {
 
       if (filterSub) {
         query = query.ilike('level', `%${filterSub}%`);
-      } else if (filterMain !== DEFAULT_FILTER_MAIN && filterMain !== '전체 보기') {
+      } else if (filterMain !== DEFAULT_FILTER_MAIN && filterMain !== '전체') {
         const keyword = filterMain.replace(' 복식', '').replace('단식', '');
         query = query.ilike('level', `%${keyword}%`);
       }

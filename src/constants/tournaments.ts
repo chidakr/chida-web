@@ -1,6 +1,6 @@
 /** 대회 목록 필터용 카테고리 (남/여/혼복/단식 등) */
 export const CATEGORIES = [
-  { id: 'all', label: '전체 보기', sub: [] as string[] },
+  { id: 'all', label: '전체', color: 'bg-slate-400', sub: [] as string[] },
   {
     id: 'men',
     label: '남자 복식',
